@@ -1,0 +1,65 @@
+{
+  "name": "orbits",
+  "version": "1.0.0",
+  "description": "Juego espacial multijugador con React + Phaser.js y NestJS",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "electron",
+    "shared"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm run install:client && npm run install:server && npm run install:electron",
+    "install:client": "cd client && npm install",
+    "install:server": "cd server && npm install",
+    "install:electron": "cd electron && npm install",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run start:dev",
+    "dev:electron": "cd electron && npm run dev",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "build:electron": "npm run build:client && cd electron && npm run build",
+    "test": "npm run test:client && npm run test:server",
+    "test:client": "cd client && npm run test",
+    "test:server": "cd server && npm run test",
+    "lint": "npm run lint:client && npm run lint:server",
+    "lint:client": "cd client && npm run lint",
+    "lint:server": "cd server && npm run lint",
+    "clean": "npm run clean:client && npm run clean:server && npm run clean:electron",
+    "clean:client": "cd client && rm -rf dist node_modules",
+    "clean:server": "cd server && rm -rf dist node_modules",
+    "clean:electron": "cd electron && rm -rf dist release node_modules",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "migration:generate": "cd server && npm run migration:generate",
+    "migration:run": "cd server && npm run migration:run"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "game",
+    "multiplayer",
+    "space",
+    "phaser",
+    "react",
+    "nestjs",
+    "typescript",
+    "websocket",
+    "electron"
+  ],
+  "author": "Orbits Game Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/orbits.git"
+  }
+}

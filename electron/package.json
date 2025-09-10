@@ -1,0 +1,98 @@
+{
+  "name": "@orbits/electron",
+  "version": "1.0.0",
+  "description": "Aplicación desktop de Orbits usando Electron",
+  "main": "dist/main.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc && electron-builder",
+    "build:win": "tsc && electron-builder --win",
+    "build:mac": "tsc && electron-builder --mac",
+    "build:linux": "tsc && electron-builder --linux",
+    "compile": "tsc",
+    "dev": "tsc && concurrently \"tsc -w\" \"electron dist/main.js\"",
+    "pack": "tsc && electron-builder --dir",
+    "dist": "tsc && electron-builder",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
+  },
+  "build": {
+    "appId": "com.orbits.spacegame",
+    "productName": "Orbits Space Game",
+    "directories": {
+      "output": "release/${version}"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../client/dist",
+        "to": "app"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        }
+      ],
+      "icon": "build/icons/icon.ico"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "build/icons/icon.icns",
+      "category": "public.app-category.games"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icons/",
+      "category": "Game"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "your-username",
+      "repo": "orbits"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  },
+  "devDependencies": {
+    "electron": "^27.1.3",
+    "electron-builder": "^24.6.4",
+    "@types/node": "^20.9.0",
+    "@typescript-eslint/eslint-plugin": "^6.10.0",
+    "@typescript-eslint/parser": "^6.10.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.53.0",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

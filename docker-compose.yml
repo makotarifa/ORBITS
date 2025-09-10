@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: orbits_game
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/db/init:/docker-entrypoint-initdb.d
+    networks:
+      - orbits-network
+
+  # Redis for session storage and caching
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - orbits-network
+
+  # Backend Server (Development)
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: orbits_game
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NODE_ENV: development
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - orbits-network
+    profiles:
+      - dev
+
+  # Frontend Client (Development)
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+      VITE_SOCKET_URL: http://localhost:3000
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    networks:
+      - orbits-network
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  orbits-network:
+    driver: bridge

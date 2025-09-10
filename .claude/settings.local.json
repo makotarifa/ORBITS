@@ -1,0 +1,54 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp remove:*)",
+      "Bash(npx:*)",
+      "Bash(npm search:*)",
+      "Bash(claude mcp:*)",
+      "mcp__atlassian__jira_ls_projects",
+      "Bash(mcp__atlassian__jira:*)",
+      "mcp__atlassian__getAccessibleAtlassianResources",
+      "mcp__atlassian__searchJiraIssuesUsingJql",
+      "Bash(find:*)",
+      "mcp__atlassian__getJiraIssue",
+      "Bash(git branch:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(timeout 10 npm run test.unit)",
+      "mcp__atlassian__getVisibleJiraProjects",
+      "Bash(npx eslint:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(git commit:*)",
+      "Bash(gh pr view:*)",
+      "Bash(git fetch:*)",
+      "Bash(timeout 30 npm run test.unit)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 15 npm run test.unit -- AppointmentCard.test.tsx)",
+      "Bash(timeout 15 npm run test.unit -- CalendarView.test.tsx)",
+      "Bash(chmod:*)",
+      "Bash(docker-compose:*)",
+      "Bash(grep:*)",
+      "mcp__atlassian__getConfluencePageFooterComments",
+      "mcp__atlassian__createJiraIssue",
+      "Bash(git checkout:*)",
+      "mcp__atlassian__transitionJiraIssue",
+      "mcp__atlassian__getTransitionsForJiraIssue",
+      "Bash(git add:*)",
+      "mcp__atlassian__addCommentToJiraIssue",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(npm install)",
+      "Bash(git init:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [
+      "D:\\d D:\\CodePractice"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "atlassian"
+  ]
+}
