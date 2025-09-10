@@ -39,7 +39,8 @@
       "Bash(git push:*)",
       "Bash(gh pr create:*)",
       "Bash(npm install)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(gh api:*)"
     ],
     "deny": [],
     "ask": [],
