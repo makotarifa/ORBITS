@@ -64,7 +64,7 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Match, (match) => match.winner)
+  @OneToMany(() => Match, 'winner')
   wonMatches: Match[];
 
   @OneToMany(() => Ranking, (ranking) => ranking.user)

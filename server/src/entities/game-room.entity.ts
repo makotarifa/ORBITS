@@ -119,15 +119,15 @@ export class GameRoom {
 
   // Computed properties
   get currentPlayers(): number {
-    return this.players?.filter(p => p.role === 'player').length || 0;
+    return (this.players ?? []).filter(p => p.role === 'player').length;
   }
 
   get currentSpectators(): number {
-    return this.players?.filter(p => p.role === 'spectator').length || 0;
+    return (this.players ?? []).filter(p => p.role === 'spectator').length;
   }
 
   get readyPlayers(): number {
-    return this.players?.filter(p => p.isReady && p.role === 'player').length || 0;
+    return (this.players ?? []).filter(p => p.isReady && p.role === 'player').length;
   }
 
   get canStart(): boolean {

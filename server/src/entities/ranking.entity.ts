@@ -20,7 +20,7 @@ export enum RankingType {
 @Entity('rankings')
 @Index(['type', 'rank'])
 @Index(['type', 'score'])
-@Index(['userId', 'type'], { unique: true })
+@Index(['userId', 'type', 'period'], { unique: true })
 @Index(['period'])
 export class Ranking {
   @PrimaryGeneratedColumn('uuid')

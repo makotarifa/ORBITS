@@ -101,7 +101,7 @@ export class Match {
 
   // Computed properties
   get currentPlayers(): number {
-    return this.players?.filter(p => !p.leftAt).length || 0;
+    return (this.players ?? []).filter(p => !p.leftAt).length;
   }
 
   get isActive(): boolean {
