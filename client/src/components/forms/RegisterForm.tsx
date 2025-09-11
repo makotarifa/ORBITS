@@ -1,5 +1,8 @@
-import React from 'react';
-import { useRegisterForm } from '../../hooks/useRegisterForm';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useAuth } from '../../contexts/AuthContext';
 import { useAuthTranslations } from '../../hooks/ui/useAuthTranslations';
 
 interface RegisterFormProps {
@@ -7,14 +10,72 @@ interface RegisterFormProps {
   onSwitchToLogin?: () => void;
 }
 
+// Dynamic validation schema using i18n
+const createRegisterSchema = (validation: any) => z.object({
+  email: z
+    .string()
+    .min(1, validation.emailRequired)
+    .email(validation.emailInvalid),
+  username: z
+    .string()
+    .min(1, validation.usernameRequired)
+    .min(3, validation.usernameMinLength)
+    .max(20, validation.usernameMaxLength)
+    .regex(/^\w+$/, validation.usernamePattern),
+  password: z
+    .string()
+    .min(1, validation.passwordRequired)
+    .min(8, validation.passwordMinLength)
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, validation.passwordPattern),
+  confirmPassword: z
+    .string()
+    .min(1, validation.confirmPasswordRequired),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: validation.passwordsNotMatch,
+  path: ['confirmPassword'],
+});
+
+type RegisterFormData = {
+  email: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+};
+
 export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSuccess,
   onSwitchToLogin
 }) => {
-  const { form, isLoading, errors, onSubmit } = useRegisterForm(onSuccess);
-  const { labels, placeholders, messages } = useAuthTranslations();
+  const { register: registerUser } = useAuth();
+  const { labels, placeholders, messages, validation, general } = useAuthTranslations();
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const { register, formState: { isValid } } = form;
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(createRegisterSchema(validation)),
+    defaultValues: {
+      email: '',
+      username: '',
+      password: '',
+      confirmPassword: '',
+    },
+    mode: 'onSubmit', // Only validate on submit to avoid premature errors
+  });
+
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
+
+  const onSubmit = async (data: RegisterFormData) => {
+    setServerError(null);
+
+    try {
+      await registerUser(data.email, data.username, data.password);
+      onSuccess?.();
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setServerError(error.message || general.unexpectedError);
+    }
+  };
+
+  const handleFormSubmit = handleSubmit(onSubmit);
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -24,7 +85,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           <p className="text-slate-400">{messages.joinBattle}</p>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={handleFormSubmit} className="space-y-6">
           {/* Email Field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
@@ -36,7 +97,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               id="email"
               className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               placeholder={placeholders.email}
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
@@ -54,7 +115,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               id="username"
               className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               placeholder={placeholders.username}
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
             {errors.username && (
               <p className="mt-1 text-sm text-red-400">{errors.username.message}</p>
@@ -72,7 +133,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               id="password"
               className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               placeholder={placeholders.password}
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
             {errors.password && (
               <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
@@ -90,27 +151,27 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               id="confirmPassword"
               className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               placeholder={placeholders.password}
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
             {errors.confirmPassword && (
               <p className="mt-1 text-sm text-red-400">{errors.confirmPassword.message}</p>
             )}
           </div>
 
-          {/* General Error */}
-          {errors.general && (
+          {/* Server Error */}
+          {serverError && (
             <div className="bg-red-900/50 border border-red-700 rounded-md p-3">
-              <p className="text-sm text-red-400">{errors.general.message}</p>
+              <p className="text-sm text-red-400">{serverError}</p>
             </div>
           )}
 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading || !isValid}
+            disabled={isSubmitting}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800"
           >
-            {isLoading ? (
+            {isSubmitting ? (
               <div className="flex items-center justify-center">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                 {messages.creatingAccount}
@@ -129,7 +190,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               <button
                 onClick={onSwitchToLogin}
                 className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 {labels.login}
               </button>

@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { AUTH_CONSTANTS } from '../../constants/auth.constants';
 
 /**
  * Custom hook for authentication-related translations
@@ -10,41 +9,45 @@ export const useAuthTranslations = () => {
 
   return {
     labels: {
-      email: t(AUTH_CONSTANTS.LABELS.EMAIL),
-      password: t(AUTH_CONSTANTS.LABELS.PASSWORD),
-      confirmPassword: t(AUTH_CONSTANTS.LABELS.CONFIRM_PASSWORD),
-      username: t(AUTH_CONSTANTS.LABELS.USERNAME),
-      createAccount: t(AUTH_CONSTANTS.LABELS.CREATE_ACCOUNT),
-      login: t(AUTH_CONSTANTS.LABELS.LOGIN),
+      email: t('auth.labels.email'),
+      password: t('auth.labels.password'),
+      confirmPassword: t('auth.labels.confirmPassword'),
+      username: t('auth.labels.username'),
+      createAccount: t('auth.labels.createAccount'),
+      login: t('auth.labels.login'),
+      emailOrUsername: t('auth.labels.emailOrUsername'),
     },
     placeholders: {
-      email: t(AUTH_CONSTANTS.PLACEHOLDERS.EMAIL),
-      password: t(AUTH_CONSTANTS.PLACEHOLDERS.PASSWORD),
-      username: t(AUTH_CONSTANTS.PLACEHOLDERS.USERNAME),
+      email: t('auth.placeholders.email'),
+      password: t('auth.placeholders.password'),
+      username: t('auth.placeholders.username'),
     },
     messages: {
-      loginSuccess: t(AUTH_CONSTANTS.MESSAGES.LOGIN_SUCCESS),
-      registerSuccess: t(AUTH_CONSTANTS.MESSAGES.REGISTER_SUCCESS),
-      invalidCredentials: t(AUTH_CONSTANTS.MESSAGES.INVALID_CREDENTIALS),
-      creatingAccount: t(AUTH_CONSTANTS.MESSAGES.CREATING_ACCOUNT),
-      joinBattle: t(AUTH_CONSTANTS.MESSAGES.JOIN_BATTLE),
-      alreadyHaveAccount: t(AUTH_CONSTANTS.MESSAGES.ALREADY_HAVE_ACCOUNT),
+      loginSuccess: t('auth.messages.loginSuccess'),
+      registerSuccess: t('auth.messages.registerSuccess'),
+      invalidCredentials: t('auth.messages.invalidCredentials'),
+      creatingAccount: t('auth.messages.creatingAccount'),
+      loggingIn: t('auth.messages.loggingIn'),
+      joinBattle: t('auth.messages.joinBattle'),
+      alreadyHaveAccount: t('auth.messages.alreadyHaveAccount'),
+      dontHaveAccount: t('auth.messages.dontHaveAccount'),
     },
-  validation: {
-      emailRequired: t(AUTH_CONSTANTS.VALIDATION.EMAIL_REQUIRED),
-      emailInvalid: t(AUTH_CONSTANTS.VALIDATION.EMAIL_INVALID),
-      usernameRequired: t(AUTH_CONSTANTS.VALIDATION.USERNAME_REQUIRED),
-      usernameMinLength: t(AUTH_CONSTANTS.VALIDATION.USERNAME_MIN_LENGTH),
-      usernameMaxLength: t(AUTH_CONSTANTS.VALIDATION.USERNAME_MAX_LENGTH),
-      usernamePattern: t(AUTH_CONSTANTS.VALIDATION.USERNAME_PATTERN),
-      passwordRequired: t(AUTH_CONSTANTS.VALIDATION.PASSWORD_REQUIRED),
-      passwordMinLength: t(AUTH_CONSTANTS.VALIDATION.PASSWORD_MIN_LENGTH),
-      passwordPattern: t(AUTH_CONSTANTS.VALIDATION.PASSWORD_PATTERN),
-      confirmPasswordRequired: t(AUTH_CONSTANTS.VALIDATION.CONFIRM_PASSWORD_REQUIRED),
-      passwordsNotMatch: t(AUTH_CONSTANTS.VALIDATION.PASSWORDS_NOT_MATCH),
+    validation: {
+      emailRequired: t('auth.validation.emailRequired'),
+      emailInvalid: t('auth.validation.emailInvalid'),
+      emailOrUsernameRequired: t('auth.validation.emailOrUsernameRequired'),
+      usernameRequired: t('auth.validation.usernameRequired'),
+      usernameMinLength: t('auth.validation.usernameMinLength'),
+      usernameMaxLength: t('auth.validation.usernameMaxLength'),
+      usernamePattern: t('auth.validation.usernamePattern'),
+      passwordRequired: t('auth.validation.passwordRequired'),
+      passwordMinLength: t('auth.validation.passwordMinLength'),
+      passwordPattern: t('auth.validation.passwordPattern'),
+      confirmPasswordRequired: t('auth.validation.confirmPasswordRequired'),
+      passwordsNotMatch: t('auth.validation.passwordsNotMatch'),
     },
     general: {
-      unexpectedError: t(AUTH_CONSTANTS.GENERAL.UNEXPECTED_ERROR),
+      unexpectedError: t('auth.messages.unexpectedError'),
     },
   };
 };

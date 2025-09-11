@@ -7,6 +7,7 @@ export const AUTH_CONSTANTS = {
     USERNAME: 'auth.labels.username',
     CREATE_ACCOUNT: 'auth.labels.createAccount',
     LOGIN: 'auth.labels.login',
+    EMAIL_OR_USERNAME: 'auth.labels.emailOrUsername',
   },
   GENERAL: {
     UNEXPECTED_ERROR: 'auth.messages.unexpectedError',
@@ -27,6 +28,7 @@ export const AUTH_CONSTANTS = {
   VALIDATION: {
     EMAIL_REQUIRED: 'auth.validation.emailRequired',
     EMAIL_INVALID: 'auth.validation.emailInvalid',
+    EMAIL_OR_USERNAME_REQUIRED: 'auth.validation.emailOrUsernameRequired',
     USERNAME_REQUIRED: 'auth.validation.usernameRequired',
     USERNAME_MIN_LENGTH: 'auth.validation.usernameMinLength',
     USERNAME_MAX_LENGTH: 'auth.validation.usernameMaxLength',
