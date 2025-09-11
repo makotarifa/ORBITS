@@ -14,12 +14,18 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'default-secret-key',
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '24h',
-        },
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const jwtSecret = configService.get<string>('JWT_SECRET');
+        if (!jwtSecret) {
+          throw new Error('JWT_SECRET environment variable is not set. The application cannot start without it.');
+        }
+        return {
+          secret: jwtSecret,
+          signOptions: {
+            expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '24h',
+          },
+        };
+      },
       inject: [ConfigService],
     }),
   ],

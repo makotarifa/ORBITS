@@ -4,6 +4,9 @@ export class InitialMigration1757551613985 implements MigrationInterface {
     name = 'InitialMigration1757551613985'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        // Enable uuid-ossp extension for UUID generation (must be done before using uuid_generate_v4())
+        await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+
         // Create users table
         await queryRunner.query(`
             CREATE TABLE "users" (
@@ -114,9 +117,6 @@ export class InitialMigration1757551613985 implements MigrationInterface {
             ADD CONSTRAINT "FK_5w6x7y8z9a0b1c2d3e4f5g6h7"
             FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
-
-        // Enable uuid-ossp extension for UUID generation
-        await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
