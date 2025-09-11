@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../entities/user.entity';
 import { RegisterDto, LoginDto, AuthResponseDto } from './dto/auth.dto';
+import { TEST_CONSTANTS } from './test.constants';
 
 @Injectable()
 export class AuthService {
@@ -27,10 +28,10 @@ export class AuthService {
 
     if (existingUser) {
       if (existingUser.email === email.toLowerCase()) {
-        throw new ConflictException('El email ya está registrado');
+        throw new ConflictException(TEST_CONSTANTS.EMAIL_ALREADY_EXISTS);
       }
       if (existingUser.username === username.toLowerCase()) {
-        throw new ConflictException('El nombre de usuario ya está en uso');
+        throw new ConflictException(TEST_CONSTANTS.USERNAME_ALREADY_EXISTS);
       }
     }
 
@@ -67,9 +68,9 @@ export class AuthService {
       };
     } catch (error) {
       if (error.code === '23505') { // PostgreSQL unique constraint violation
-        throw new ConflictException('El usuario ya existe');
+        throw new ConflictException(TEST_CONSTANTS.USER_ALREADY_EXISTS);
       }
-      throw new BadRequestException('Error al crear el usuario');
+      throw new BadRequestException(TEST_CONSTANTS.ERROR_CREATING_USER);
     }
   }
 
@@ -85,17 +86,17 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Credenciales inválidas');
+      throw new UnauthorizedException(TEST_CONSTANTS.INVALID_CREDENTIALS);
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Cuenta desactivada');
+      throw new UnauthorizedException(TEST_CONSTANTS.ACCOUNT_DEACTIVATED);
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Credenciales inválidas');
+      throw new UnauthorizedException(TEST_CONSTANTS.INVALID_CREDENTIALS);
     }
 
     // Update last login
