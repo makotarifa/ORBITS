@@ -32,7 +32,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   private readonly positionRateLimitMap: Map<string, { count: number; resetTime: number }> = new Map();
   private readonly RATE_LIMIT_WINDOW = GAME_CONSTANTS.LIMITS.RATE_LIMIT_WINDOW; // 1 minute
   private readonly RATE_LIMIT_MAX = GAME_CONSTANTS.LIMITS.RATE_LIMIT_MAX; // 30 messages per minute
-  private readonly POSITION_RATE_LIMIT_WINDOW = 1000; // 1 second
+  private readonly POSITION_RATE_LIMIT_WINDOW = GAME_CONSTANTS.LIMITS.POSITION_RATE_LIMIT_WINDOW; // 1 second
   private readonly POSITION_RATE_LIMIT_MAX = GAME_CONSTANTS.LIMITS.POSITION_UPDATE_MAX_PER_SECOND;
 
   constructor(private readonly gameService: GameService) {}

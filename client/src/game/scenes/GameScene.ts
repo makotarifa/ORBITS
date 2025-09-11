@@ -1,15 +1,13 @@
 import Phaser from 'phaser';
 import { LocalPlayerEntity, RemotePlayerEntity } from '../entities';
 import { useGameStore } from '../../stores';
-import { useGameEvents, usePlayer } from '../../hooks/socket';
+import { socketService } from '../../services/socket/socket.service';
 import { GAME_CONSTANTS } from '../../constants/game.constants';
 
 export class GameScene extends Phaser.Scene {
   private localPlayer: LocalPlayerEntity | null = null;
   private readonly remotePlayers: Map<string, RemotePlayerEntity> = new Map();
-  private readonly gameStore = useGameStore.getState();
-  private readonly gameEvents = useGameEvents();
-  private readonly playerHook = usePlayer();
+  private gameStore = useGameStore.getState();
 
   // UI elements
   private connectionStatusText: Phaser.GameObjects.Text | null = null;
@@ -81,31 +79,31 @@ export class GameScene extends Phaser.Scene {
 
   private setupSocketListeners(): void {
     // Connection events
-    this.gameEvents.onPlayerJoined((data) => {
+    socketService.on(GAME_CONSTANTS.EVENTS.PLAYER_JOINED, (data: any) => {
       this.handlePlayerJoined(data);
     });
 
-    this.gameEvents.onPlayerLeft((data) => {
+    socketService.on(GAME_CONSTANTS.EVENTS.PLAYER_LEFT, (data: any) => {
       this.handlePlayerLeft(data);
     });
 
-    this.gameEvents.onPlayerMoved((data) => {
+    socketService.on(GAME_CONSTANTS.EVENTS.PLAYER_MOVED, (data: any) => {
       this.handlePlayerMoved(data);
     });
 
-    this.gameEvents.onPositionUpdate((data) => {
+    socketService.on(GAME_CONSTANTS.EVENTS.POSITION_UPDATE, (data: any) => {
       this.handlePositionUpdate(data);
     });
 
-    this.gameEvents.onRoomJoined((data) => {
+    socketService.on(GAME_CONSTANTS.EVENTS.ROOM_JOINED, (data: any) => {
       this.handleRoomJoined(data);
     });
 
-    this.gameEvents.onRoomLeft((data) => {
+    socketService.on(GAME_CONSTANTS.EVENTS.ROOM_LEFT, (data: any) => {
       this.handleRoomLeft(data);
     });
 
-    this.gameEvents.onError((data) => {
+    socketService.on(GAME_CONSTANTS.EVENTS.ERROR, (data: any) => {
       this.handleError(data);
     });
   }
@@ -113,10 +111,10 @@ export class GameScene extends Phaser.Scene {
   private initializeGame(): void {
     // Try to join a default room
     const defaultRoomId = GAME_CONSTANTS.DEFAULTS.ROOM_ID;
-    this.playerHook.joinRoom(defaultRoomId);
+    socketService.joinRoom(defaultRoomId);
 
-    // Create local player if we have a player state
-    if (this.playerHook.player) {
+    // Create local player if socket is connected
+    if (socketService.isConnected()) {
       this.createLocalPlayer();
     }
   }
@@ -124,14 +122,14 @@ export class GameScene extends Phaser.Scene {
   private createLocalPlayer(): void {
     if (this.localPlayer) return;
 
-    const playerState = this.playerHook.player;
-    if (!playerState) return;
+    const socketId = socketService.getSocketId();
+    if (!socketId) return;
 
     this.localPlayer = new LocalPlayerEntity({
       scene: this,
-      x: playerState.position.x,
-      y: playerState.position.y,
-      playerId: playerState.id,
+      x: GAME_CONSTANTS.DEFAULTS.PLAYER_POSITION.x,
+      y: GAME_CONSTANTS.DEFAULTS.PLAYER_POSITION.y,
+      playerId: socketId,
     });
 
     // Follow the local player with camera
@@ -151,7 +149,12 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Send position to server
-    this.playerHook.updatePosition(data.position, data.rotation);
+    socketService.sendPlayerPosition({
+      roomId: this.gameStore.currentRoom || GAME_CONSTANTS.DEFAULTS.ROOM_ID,
+      position: data.position,
+      rotation: data.rotation,
+      velocity: data.velocity,
+    });
   }
 
   private handlePlayerJoined(data: any): void {
@@ -166,7 +169,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Create remote player entity if it's not the local player
-    if (data.playerId !== this.playerHook.player?.id) {
+    if (data.playerId !== socketService.getSocketId()) {
       this.createRemotePlayer(data.playerId, data.playerData);
     }
 
@@ -222,7 +225,7 @@ export class GameScene extends Phaser.Scene {
     // Create remote players for existing players in the room
     if (data.playersState) {
       data.playersState.forEach((playerState: any) => {
-        if (playerState.playerId !== this.playerHook.player?.id) {
+        if (playerState.playerId !== socketService.getSocketId()) {
           this.createRemotePlayer(playerState.playerId, playerState);
         }
       });

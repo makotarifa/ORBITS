@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
+import { GAME_CONSTANTS } from './constants/game.constants';
 
 interface PlayerPosition {
   x: number;
@@ -101,7 +102,7 @@ export class GameService {
     const lastThrottle = this.positionThrottles.get(clientId) || 0;
 
     // Check throttling (33ms = ~30 FPS)
-    if (now - lastThrottle < 33) {
+    if (now - lastThrottle < GAME_CONSTANTS.LIMITS.POSITION_UPDATE_THROTTLE) {
       return { shouldUpdate: false };
     }
 
@@ -141,7 +142,7 @@ export class GameService {
   }
 
   private hasSignificantPositionChange(oldPos: PlayerPosition, newPos: PlayerPosition): boolean {
-    const threshold = 0.1; // pixels
+    const threshold = GAME_CONSTANTS.DELTA.POSITION_THRESHOLD; // pixels
     return (
       Math.abs(oldPos.x - newPos.x) > threshold ||
       Math.abs(oldPos.y - newPos.y) > threshold
@@ -149,7 +150,7 @@ export class GameService {
   }
 
   private hasSignificantVelocityChange(oldVel: PlayerPosition, newVel: PlayerPosition): boolean {
-    const threshold = 0.05;
+    const threshold = GAME_CONSTANTS.DELTA.VELOCITY_THRESHOLD;
     return (
       Math.abs(oldVel.x - newVel.x) > threshold ||
       Math.abs(oldVel.y - newVel.y) > threshold

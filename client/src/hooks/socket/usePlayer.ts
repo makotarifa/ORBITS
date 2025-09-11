@@ -1,7 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { socketService } from '../../services/socket/socket.service';
 import { PlayerMoveDto, PlayerPositionDto } from '../../types/game-events.types';
-import { GAME_CONSTANTS } from '../../constants/game.constants';
 
 export interface PlayerState {
   id: string;
@@ -34,8 +33,6 @@ export const usePlayer = (): UsePlayerReturn => {
   const [player, setPlayer] = useState<PlayerState | null>(null);
   const [isInRoom, setIsInRoom] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
-  const positionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastPositionUpdateRef = useRef<number>(0);
 
   // Initialize player when socket connects
   useEffect(() => {
@@ -94,38 +91,15 @@ export const usePlayer = (): UsePlayerReturn => {
 
     setPlayer(updatedPlayer);
 
-    // Throttle position updates to server
-    if (now - lastPositionUpdateRef.current > GAME_CONSTANTS.LIMITS.POSITION_UPDATE_THROTTLE) {
-      lastPositionUpdateRef.current = now;
+    // Send position to server (server handles throttling)
+    const positionData: PlayerPositionDto = {
+      roomId: currentRoom,
+      position,
+      rotation,
+      velocity: player.velocity,
+    };
 
-      const positionData: PlayerPositionDto = {
-        roomId: currentRoom,
-        position,
-        rotation,
-        velocity: player.velocity,
-      };
-
-      socketService.sendPlayerPosition(positionData);
-    }
-
-    // Schedule update if not already scheduled and we're in the throttle window
-    if (positionUpdateTimeoutRef.current === null &&
-        now - lastPositionUpdateRef.current <= GAME_CONSTANTS.LIMITS.POSITION_UPDATE_THROTTLE) {
-      const timeoutId = setTimeout(() => {
-        if (player && currentRoom) {
-          const positionData: PlayerPositionDto = {
-            roomId: currentRoom,
-            position: player.position,
-            rotation: player.rotation,
-            velocity: player.velocity,
-          };
-          socketService.sendPlayerPosition(positionData);
-          positionUpdateTimeoutRef.current = null;
-        }
-      }, GAME_CONSTANTS.LIMITS.POSITION_UPDATE_THROTTLE - (now - lastPositionUpdateRef.current));
-
-      positionUpdateTimeoutRef.current = timeoutId;
-    }
+    socketService.sendPlayerPosition(positionData);
   }, [player, currentRoom]);
 
   const updateVelocity = useCallback((velocity: { x: number; y: number }) => {
@@ -154,9 +128,7 @@ export const usePlayer = (): UsePlayerReturn => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (positionUpdateTimeoutRef.current) {
-        clearTimeout(positionUpdateTimeoutRef.current);
-      }
+      // No cleanup needed since we removed throttling
     };
   }, []);
 

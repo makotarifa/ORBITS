@@ -33,6 +33,7 @@ export const GAME_CONSTANTS = {
     // Position update throttling - targeting 20-30 FPS
     POSITION_UPDATE_THROTTLE: 33, // ~30 FPS (33ms between updates)
     POSITION_UPDATE_MAX_PER_SECOND: 30, // Max 30 position updates per second
+    POSITION_RATE_LIMIT_WINDOW: 1000, // 1 second for position updates
   },
   NAMESPACE: '/game',
   // Delta compression settings
