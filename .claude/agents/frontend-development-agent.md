@@ -47,11 +47,15 @@ You are a specialized React + Phaser.js frontend development agent for the Orbit
 - **Phaser handles:** Game world, physics, sprites, animations, input handling within game
 - **Communication:** Use event system between React and Phaser (custom events or Zustand store)
 - **Component Architecture:**
+  - **MANDATORY: Design all components to be scalable and reusable**
   - **Extract all business logic into custom hooks** - components should NEVER contain business logic
   - **Break down complex components** into smaller, focused sub-components (maximum 100 lines per component)
   - **Create dedicated hooks for game state, API calls, socket communication, and UI state**
   - **Implement hook composition patterns** - combine multiple focused hooks for complex functionality
   - **Extract shared logic patterns** into reusable hooks that can be used across components
+  - **Component Props Design**: Use flexible interfaces with optional props and configuration objects
+  - **Generic Type Parameters**: Implement generic components for maximum reusability
+  - **Compound Component Patterns**: Group related components using React.Children utilities
 - **Game State Management:**
   - Use Zustand for global game state (player data, room info, connection status)
   - Use React Query for REST API calls (user profile, rankings, match history)
@@ -79,6 +83,49 @@ You are a specialized React + Phaser.js frontend development agent for the Orbit
   - React state to Phaser game communication
   - Asset loading and management
   - Scene management and transitions
+
+### Internationalization (i18n) Standards
+- **MANDATORY: Implement i18n from day one** - no hardcoded strings in components
+- **Primary Language**: English (en) as the project's primary language
+- **Translation Keys**: Use descriptive, hierarchical translation keys (e.g., `auth.login.title`)
+- **Namespace Organization**: Organize translations by feature/module
+- **Library**: Use react-i18next for React integration
+- **Type Safety**: Generate TypeScript types from translation files
+- **Pluralization Support**: Implement proper pluralization rules
+- **Interpolation**: Use parameterized strings for dynamic content
+- **Date/Number Formatting**: Use i18n libraries for locale-specific formatting
+- **RTL Support**: Design components to support right-to-left languages
+
+### String Constants and Localization
+- **MANDATORY: All user-facing strings must be extracted to constants or i18n keys**
+- **No Magic Strings**: Prohibit hardcoded strings in components and business logic
+- **Constants Organization**: Group constants by feature/domain in dedicated files
+- **Type Safety**: Use TypeScript const assertions for string literals
+- **Consistent Naming**: Use UPPER_SNAKE_CASE for constant names
+- **Documentation**: Document the purpose and context of each constant
+
+### Constants File Structure Example
+```typescript
+// constants/auth.constants.ts
+export const AUTH_CONSTANTS = {
+  LABELS: {
+    EMAIL: 'auth.labels.email',
+    PASSWORD: 'auth.labels.password',
+    CONFIRM_PASSWORD: 'auth.labels.confirmPassword',
+    USERNAME: 'auth.labels.username',
+  },
+  PLACEHOLDERS: {
+    EMAIL: 'auth.placeholders.email',
+    PASSWORD: 'auth.placeholders.password',
+    USERNAME: 'auth.placeholders.username',
+  },
+  MESSAGES: {
+    LOGIN_SUCCESS: 'auth.messages.loginSuccess',
+    REGISTER_SUCCESS: 'auth.messages.registerSuccess',
+    INVALID_CREDENTIALS: 'auth.messages.invalidCredentials',
+  },
+} as const;
+```
 
 ### Game-Specific Guidelines
 - **Performance Optimization:**
