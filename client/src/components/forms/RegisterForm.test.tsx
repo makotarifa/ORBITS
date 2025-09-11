@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RegisterForm } from './RegisterForm';
 import '../../i18n'; // Load and configure i18n for tests
@@ -77,42 +76,45 @@ describe('RegisterForm', () => {
     expect(screen.getByText('General error')).toBeInTheDocument();
   });
 
-  it('calls onSuccess when form is submitted successfully', async () => {
-    const user = userEvent.setup();
-    const mockHandleSubmit = vi.fn((fn) => async (data: any) => {
-      await fn(data);
-      mockOnSuccess(); // Call onSuccess in the mock
+  it('calls onSuccess when form is submitted successfully', () => {
+    const mockOnSubmit = vi.fn().mockImplementation(async () => {
+      mockOnSuccess();
     });
 
     mockUseRegisterForm.mockReturnValue({
       form: {
         register: vi.fn(),
-        handleSubmit: mockHandleSubmit,
+        handleSubmit: vi.fn((fn) => () => {
+          fn({ email: 'test@example.com', username: 'testuser', password: 'password123' });
+        }),
         formState: { isValid: true },
       },
       isLoading: false,
       errors: {},
-      onSubmit: mockHandleSubmit(vi.fn()),
+      onSubmit: mockOnSubmit,
     });
 
     render(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const submitButton = screen.getByRole('button', { name: 'Create Account' });
-    await user.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockOnSuccess).toHaveBeenCalled();
-    });
+    // Simulate form submission
+    const form = submitButton.closest('form');
+    if (form) {
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    }
+
+    expect(mockOnSuccess).toHaveBeenCalled();
   });
 
-  it('shows switch to login link when onSwitchToLogin is provided', async () => {
-    const user = userEvent.setup();
+  it('shows switch to login link when onSwitchToLogin is provided', () => {
     render(<RegisterForm onSuccess={mockOnSuccess} onSwitchToLogin={mockOnSwitchToLogin} />);
 
     const loginLink = screen.getByText('Sign In');
     expect(loginLink).toBeInTheDocument();
 
-    await user.click(loginLink);
+    // Simulate click without userEvent
+    loginLink.click();
     expect(mockOnSwitchToLogin).toHaveBeenCalled();
   });
 });

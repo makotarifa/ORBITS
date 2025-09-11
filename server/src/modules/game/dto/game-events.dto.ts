@@ -45,3 +45,20 @@ export class PlayerMoveDto {
   @Type(() => VelocityDto)
   velocity?: VelocityDto;
 }
+
+export class PlayerPositionDto {
+  @IsString()
+  roomId: string;
+
+  @ValidateNested()
+  @Type(() => PositionDto)
+  position: PositionDto;
+
+  @IsNumber()
+  rotation: number;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => VelocityDto)
+  velocity?: VelocityDto;
+}
