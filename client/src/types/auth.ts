@@ -24,6 +24,7 @@ export interface RegisterApiRequest {
 
 export interface RegisterResponse {
   access_token: string;
+  refresh_token?: string;
   user: {
     id: string;
     username: string;
@@ -42,6 +43,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   access_token: string;
+  refresh_token?: string;
   user: {
     id: string;
     username: string;
@@ -60,6 +62,7 @@ export interface FormFieldError {
 
 export interface FormErrors {
   email?: FormFieldError;
+  emailOrUsername?: FormFieldError;
   username?: FormFieldError;
   password?: FormFieldError;
   confirmPassword?: FormFieldError;

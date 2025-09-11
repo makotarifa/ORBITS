@@ -6,7 +6,8 @@
       "confirmPassword": "Confirm Password",
       "username": "Username",
       "createAccount": "Create Account",
-      "login": "Sign In"
+      "login": "Sign In",
+      "emailOrUsername": "Email or Username"
     },
     "placeholders": {
       "email": "your@email.com",
@@ -18,13 +19,19 @@
       "registerSuccess": "Account created successfully!",
       "invalidCredentials": "Invalid credentials",
       "creatingAccount": "Creating account...",
+      "loggingIn": "Logging in...",
       "joinBattle": "Join the space battle",
-  "alreadyHaveAccount": "Already have an account?",
-  "unexpectedError": "Unexpected error. Please try again."
+      "alreadyHaveAccount": "Already have an account?",
+      "dontHaveAccount": "Don't have an account?",
+      "welcomeTitle": "Welcome to Orbits!",
+      "authSuccessMessage": "Authentication successful. Game interface coming soon...",
+      "loginSuccessAlert": "Login successful! Welcome to Orbits!",
+      "unexpectedError": "Unexpected error. Please try again."
     },
     "validation": {
       "emailRequired": "Email is required",
       "emailInvalid": "Invalid email format",
+      "emailOrUsernameRequired": "Email or username is required",
       "usernameRequired": "Username is required",
       "usernameMinLength": "Username must be at least 3 characters",
       "usernameMaxLength": "Username cannot exceed 20 characters",
