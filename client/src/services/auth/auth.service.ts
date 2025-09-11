@@ -1,6 +1,6 @@
 import { apiService } from '../api/api.service';
 import {
-  RegisterRequest,
+  RegisterApiRequest,
   RegisterResponse,
   LoginRequest,
   LoginResponse,
@@ -10,7 +10,7 @@ import {
 class AuthService {
   private readonly baseUrl = '/auth';
 
-  async register(data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> {
+  async register(data: RegisterApiRequest): Promise<ApiResponse<RegisterResponse>> {
     return apiService.post<RegisterResponse>(`${this.baseUrl}/register`, data);
   }
 
