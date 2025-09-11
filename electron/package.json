@@ -15,7 +15,8 @@
     "dist": "tsc && electron-builder",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix"
+    "lint:fix": "eslint . --ext .ts --fix",
+    "clean": "npx rimraf dist release node_modules"
   },
   "build": {
     "appId": "com.orbits.spacegame",
