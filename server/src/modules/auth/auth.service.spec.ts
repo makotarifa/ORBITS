@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { User } from '../../entities/user.entity';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { TEST_CONSTANTS } from './test.constants';
 
 // Mock bcrypt
 jest.mock('bcrypt');
@@ -115,7 +116,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(existingUser);
 
       await expect(service.register(registerDto)).rejects.toThrow(
-        new ConflictException('El email ya está registrado')
+        new ConflictException(TEST_CONSTANTS.EMAIL_ALREADY_EXISTS)
       );
     });
 
@@ -129,7 +130,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(existingUser);
 
       await expect(service.register(registerDto)).rejects.toThrow(
-        new ConflictException('El nombre de usuario ya está en uso')
+        new ConflictException(TEST_CONSTANTS.USERNAME_ALREADY_EXISTS)
       );
     });
 
@@ -144,7 +145,7 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
 
       await expect(service.register(registerDto)).rejects.toThrow(
-        new ConflictException('El usuario ya existe')
+        new ConflictException(TEST_CONSTANTS.USER_ALREADY_EXISTS)
       );
     });
 
@@ -156,7 +157,7 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
 
       await expect(service.register(registerDto)).rejects.toThrow(
-        new BadRequestException('Error al crear el usuario')
+        new BadRequestException(TEST_CONSTANTS.ERROR_CREATING_USER)
       );
     });
   });
@@ -243,7 +244,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        new UnauthorizedException('Credenciales inválidas')
+        new UnauthorizedException(TEST_CONSTANTS.INVALID_CREDENTIALS)
       );
     });
 
@@ -259,7 +260,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(inactiveUser);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        new UnauthorizedException('Cuenta desactivada')
+        new UnauthorizedException(TEST_CONSTANTS.ACCOUNT_DEACTIVATED)
       );
     });
 
@@ -276,7 +277,7 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        new UnauthorizedException('Credenciales inválidas')
+        new UnauthorizedException(TEST_CONSTANTS.INVALID_CREDENTIALS)
       );
     });
   });

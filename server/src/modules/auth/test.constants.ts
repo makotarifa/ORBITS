@@ -12,6 +12,10 @@ export const TEST_CONSTANTS = {
   // Error messages
   EMAIL_ALREADY_EXISTS: 'Email already exists',
   USERNAME_ALREADY_EXISTS: 'Username already exists',
+  USER_ALREADY_EXISTS: 'User already exists',
+  ERROR_CREATING_USER: 'Error creating user',
+  INVALID_CREDENTIALS: 'Invalid credentials',
+  ACCOUNT_DEACTIVATED: 'Account deactivated',
   INVALID_EMAIL_FORMAT: 'Invalid email format',
   PASSWORD_TOO_SHORT: 'Password must be at least 8 characters long',
   MISSING_REQUIRED_FIELDS: 'Missing required fields',

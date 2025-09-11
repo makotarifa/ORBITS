@@ -9,14 +9,14 @@ import { User } from '../../entities/user.entity';
 import { RegisterDto } from './dto/auth.dto';
 import { TEST_CONSTANTS } from './test.constants';
 
-// Mock del AuthService
+// Mock AuthService
 const mockAuthService = {
   register: jest.fn(),
   login: jest.fn(),
   validateUser: jest.fn(),
 };
 
-// Mock del UserRepository
+// Mock UserRepository
 const mockUserRepository = {
   findOne: jest.fn(),
   create: jest.fn(),
