@@ -1,0 +1,39 @@
+{
+  "auth": {
+    "labels": {
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "username": "Username",
+      "createAccount": "Create Account",
+      "login": "Sign In"
+    },
+    "placeholders": {
+      "email": "your@email.com",
+      "password": "••••••••",
+      "username": "your_username"
+    },
+    "messages": {
+      "loginSuccess": "Successfully logged in!",
+      "registerSuccess": "Account created successfully!",
+      "invalidCredentials": "Invalid credentials",
+      "creatingAccount": "Creating account...",
+      "joinBattle": "Join the space battle",
+  "alreadyHaveAccount": "Already have an account?",
+  "unexpectedError": "Unexpected error. Please try again."
+    },
+    "validation": {
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email format",
+      "usernameRequired": "Username is required",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "usernameMaxLength": "Username cannot exceed 20 characters",
+      "usernamePattern": "Only letters, numbers and underscores allowed",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "passwordPattern": "Must contain uppercase, lowercase and number",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordsNotMatch": "Passwords do not match"
+    }
+  }
+}
