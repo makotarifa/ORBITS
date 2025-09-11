@@ -15,6 +15,14 @@ interface PlayerState {
   roomId?: string;
 }
 
+interface PlayerDeltaData {
+  playerId: string;
+  position?: PlayerPosition;
+  rotation?: number;
+  velocity?: PlayerPosition;
+  timestamp: number;
+}
+
 interface PlayerClient {
   socket: Socket;
   state: PlayerState;
@@ -92,7 +100,7 @@ export class GameService {
     position?: PlayerPosition,
     rotation?: number,
     velocity?: PlayerPosition,
-  ): { shouldUpdate: boolean; deltaData?: any } {
+  ): { shouldUpdate: boolean; deltaData?: PlayerDeltaData } {
     const client = this.connectedClients.get(clientId);
     if (!client) {
       return { shouldUpdate: false };
@@ -107,7 +115,7 @@ export class GameService {
     }
 
     const oldState = client.state;
-    const deltaData: any = { playerId: clientId };
+    const deltaData: PlayerDeltaData = { playerId: clientId, timestamp: now };
     let hasSignificantChange = false;
 
     // Check for significant position change
@@ -134,7 +142,6 @@ export class GameService {
     if (hasSignificantChange) {
       client.state.lastUpdate = now;
       this.positionThrottles.set(clientId, now);
-      deltaData.timestamp = now;
       return { shouldUpdate: true, deltaData };
     }
 
