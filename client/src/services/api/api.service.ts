@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { ApiResponse } from '../../types/auth';
 import { GAME_CONSTANTS } from '../../constants/game.constants';
-import { authService } from '../auth/auth.service';
+import { tokenService } from '../token/token.service';
 
 class ApiService {
   private readonly axiosInstance: AxiosInstance;
@@ -28,8 +28,8 @@ class ApiService {
     this.axiosInstance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         // Add auth token if available
-        const token = authService.getToken();
-        if (token && !authService.isTokenExpired(token)) {
+        const token = tokenService.getToken();
+        if (token && !tokenService.isTokenExpired(token)) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -64,22 +64,47 @@ class ApiService {
           originalRequest._retry = true;
           this.isRefreshing = true;
 
-          // Try to refresh token
-          const newToken = await authService.refreshToken();
-
-          if (newToken) {
-            // Update the original request with new token
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
-            // Process queued requests
-            this.processQueue(null, newToken);
-
-            return this.axiosInstance(originalRequest);
-          } else {
-            // Refresh failed, clear tokens and reject
-            authService.clearTokens();
+          // Try to refresh token using fetch directly to avoid circular dependency
+          const refreshToken = tokenService.getRefreshToken();
+          if (!refreshToken) {
             this.processQueue(error, null);
-            return Promise.reject(new Error('Authentication failed'));
+            return Promise.reject(new Error('No refresh token available'));
+          }
+
+          try {
+            const baseURL = import.meta.env.VITE_API_URL || GAME_CONSTANTS.DEFAULTS.API_URL;
+            const response = await fetch(`${baseURL}/auth/refresh`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ refreshToken }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.data?.access_token) {
+                const newToken = data.data.access_token;
+                tokenService.setTokens(newToken);
+
+                // Update the original request with new token
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+                // Process queued requests
+                this.processQueue(null, newToken);
+
+                return this.axiosInstance(originalRequest);
+              }
+            }
+
+            // Refresh failed
+            tokenService.clearTokens();
+            this.processQueue(error, null);
+            return Promise.reject(new Error('Token refresh failed'));
+          } catch {
+            tokenService.clearTokens();
+            this.processQueue(error, null);
+            return Promise.reject(new Error('Token refresh failed'));
           }
         }
 

@@ -47,10 +47,7 @@ export const useLoginForm = (onSuccess?: () => void) => {
       const response = await authService.login(dataToSend);
 
       if (response.success) {
-        // Login successful - store token
-        if (response.data?.access_token) {
-          localStorage.setItem('accessToken', response.data.access_token);
-        }
+        // Login successful
         onSuccess?.();
         return { success: true, user: response.data?.user };
       } else {
