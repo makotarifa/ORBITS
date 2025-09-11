@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './modules/auth';
+import { GameModule } from './modules/game/game.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AuthModule } from './modules/auth';
 
     // Feature modules
     AuthModule,
+    GameModule,
   ],
 })
 export class AppModule {}

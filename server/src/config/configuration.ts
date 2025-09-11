@@ -1,24 +1,26 @@
+import { APP_CONSTANTS } from '../constants/app.constants';
+
 export default () => ({
   port: parseInt(process.env.PORT, 10) || 3000,
   database: {
-    host: process.env.DATABASE_HOST,
-    port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+    host: process.env.DATABASE_HOST || APP_CONSTANTS.DATABASE.DEFAULT_HOST,
+    port: parseInt(process.env.DATABASE_PORT, 10) || APP_CONSTANTS.DATABASE.DEFAULT_PORT,
     username: process.env.DATABASE_USERNAME,
     password: process.env.DATABASE_PASSWORD,
     name: process.env.DATABASE_NAME,
   },
   jwt: {
-    secret: process.env.JWT_SECRET,
+    secret: process.env[APP_CONSTANTS.JWT.SECRET_KEY],
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
   bcrypt: {
     saltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 12,
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN || APP_CONSTANTS.CORS.DEFAULT_FRONTEND_URL,
   },
   socket: {
-    corsOrigin: process.env.SOCKET_CORS_ORIGIN || 'http://localhost:5173',
+    corsOrigin: process.env.SOCKET_CORS_ORIGIN || APP_CONSTANTS.CORS.DEFAULT_FRONTEND_URL,
   },
   rateLimit: {
     ttl: parseInt(process.env.RATE_LIMIT_TTL, 10) || 60000,
