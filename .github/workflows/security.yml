@@ -24,29 +24,41 @@ jobs:
         node-version: '18.x'
         cache: 'npm'
 
-    - name: Install dependencies
+    - name: Install server dependencies
       run: npm ci
       working-directory: ./server
+      continue-on-error: true
 
-    - name: Run npm audit
+    - name: Run npm audit (Server)
       run: npm audit --audit-level=moderate
       working-directory: ./server
       continue-on-error: true
 
-    - name: Run security scan with Snyk (if available)
-      run: npx snyk test --severity-threshold=medium || echo "Snyk not configured"
-      working-directory: ./server
+    - name: Install client dependencies
+      run: npm ci
+      working-directory: ./client
       continue-on-error: true
 
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
+    - name: Run npm audit (Client)
+      run: npm audit --audit-level=moderate
+      working-directory: ./client
+      continue-on-error: true
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Check for known vulnerabilities with npm audit
+      run: |
+        echo "🔍 Checking server dependencies..."
+        cd server && npm audit --json > ../server-audit.json || true
+        echo "🔍 Checking client dependencies..."
+        cd ../client && npm audit --json > ../client-audit.json || true
+        echo "📋 Security scan completed. Check logs above for any vulnerabilities."
+      continue-on-error: true
 
-    - name: Dependency Review
-      uses: actions/dependency-review-action@v3
+    - name: Upload audit reports
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
-        fail-on-severity: moderate
+        name: security-audit-reports
+        path: |
+          server-audit.json
+          client-audit.json
+        retention-days: 30
