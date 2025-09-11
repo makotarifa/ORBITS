@@ -54,7 +54,7 @@ export const useRegisterForm = (onSuccess?: () => void) => {
     setErrors({});
 
     try {
-      // Remove confirmPassword before sending to backend (backend validates it internally)
+      // Remove confirmPassword before sending to backend (password confirmation is now validated on the frontend only)
       const dataToSend: RegisterApiRequest = {
         email: data.email,
         username: data.username,
