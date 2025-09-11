@@ -1,4 +1,5 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, ValidateNested, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class JoinRoomDto {
   @IsString()
@@ -10,16 +11,37 @@ export class LeaveRoomDto {
   roomId: string;
 }
 
+class PositionDto {
+  @IsNumber()
+  x: number;
+
+  @IsNumber()
+  y: number;
+}
+
+class VelocityDto {
+  @IsNumber()
+  x: number;
+
+  @IsNumber()
+  y: number;
+}
+
 export class PlayerMoveDto {
   @IsString()
   roomId: string;
 
   @IsOptional()
-  position?: { x: number; y: number };
+  @ValidateNested()
+  @Type(() => PositionDto)
+  position?: PositionDto;
 
   @IsOptional()
+  @IsNumber()
   rotation?: number;
 
   @IsOptional()
-  velocity?: { x: number; y: number };
+  @ValidateNested()
+  @Type(() => VelocityDto)
+  velocity?: VelocityDto;
 }

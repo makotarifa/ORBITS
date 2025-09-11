@@ -70,7 +70,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.gameService.removeClient(client.id);
 
     // Broadcast updated client count
-    this.server.emit('clients-count', {
+    this.server.emit(GAME_CONSTANTS.EVENTS.CLIENTS_COUNT, {
       count: this.gameService.getConnectedClientsCount(),
     });
   }
