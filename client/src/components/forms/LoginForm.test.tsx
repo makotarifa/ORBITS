@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LoginForm } from './LoginForm';
 import { useAuth } from '../../contexts/AuthContext';
@@ -159,9 +159,11 @@ describe('LoginForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Sign In' });
 
     // Fill out and submit the form
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.click(submitButton);
+    });
 
     // Check loading state
     await waitFor(() => {
@@ -170,7 +172,9 @@ describe('LoginForm', () => {
     });
 
     // Resolve the promise to finish loading
-    resolveLogin!();
+    await act(async () => {
+      resolveLogin!();
+    });
   });
 
   it('should show error message on login failure', async () => {
@@ -232,9 +236,11 @@ describe('LoginForm', () => {
     const switchButton = screen.getByText('Create Account');
 
     // Fill out and submit the form
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.click(submitButton);
+    });
 
     // Check that form elements are disabled during submission
     await waitFor(() => {
@@ -245,6 +251,8 @@ describe('LoginForm', () => {
     });
 
     // Resolve the promise to finish loading
-    resolveLogin!();
+    await act(async () => {
+      resolveLogin!();
+    });
   });
 });

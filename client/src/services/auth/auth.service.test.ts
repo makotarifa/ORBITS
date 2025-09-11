@@ -7,35 +7,20 @@ vi.mock('../api/api.service', () => ({
   },
 }));
 
-// Mock tokenService
+// Mock tokenService - these are the methods that authService calls
 vi.mock('../token/token.service', () => ({
   tokenService: {
     setTokens: vi.fn(),
-    getToken: vi.fn(),
     getRefreshToken: vi.fn(),
     clearTokens: vi.fn(),
-    isTokenExpired: vi.fn(),
-    getCurrentUser: vi.fn(),
     isAuthenticated: vi.fn(),
+    getCurrentUser: vi.fn(),
   },
 }));
 
 import { authService } from './auth.service';
 import { apiService } from '../api/api.service';
 import { tokenService } from '../token/token.service';
-
-// Mock sessionStorage
-const mockSessionStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-};
-
-Object.defineProperty(window, 'sessionStorage', {
-  value: mockSessionStorage,
-  writable: true,
-});
 
 describe('AuthService', () => {
   beforeEach(() => {
@@ -44,73 +29,6 @@ describe('AuthService', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-  });
-
-  describe('Token Management', () => {
-    it('should set tokens correctly', () => {
-      tokenService.setTokens('access-token', 'refresh-token');
-
-      expect(mockSessionStorage.setItem).toHaveBeenCalledWith('accessToken', 'access-token');
-      expect(mockSessionStorage.setItem).toHaveBeenCalledWith('refreshToken', 'refresh-token');
-    });
-
-    it('should set tokens without refresh token', () => {
-      tokenService.setTokens('access-token');
-
-      expect(mockSessionStorage.setItem).toHaveBeenCalledWith('accessToken', 'access-token');
-      expect(mockSessionStorage.setItem).not.toHaveBeenCalledWith('refreshToken', expect.any(String));
-    });
-
-    it('should get token correctly', () => {
-      mockSessionStorage.getItem.mockReturnValue('access-token');
-
-      const token = tokenService.getToken();
-
-      expect(mockSessionStorage.getItem).toHaveBeenCalledWith('accessToken');
-      expect(token).toBe('access-token');
-    });
-
-    it('should get refresh token correctly', () => {
-      mockSessionStorage.getItem.mockReturnValue('refresh-token');
-
-      const token = tokenService.getRefreshToken();
-
-      expect(mockSessionStorage.getItem).toHaveBeenCalledWith('refreshToken');
-      expect(token).toBe('refresh-token');
-    });
-
-    it('should clear tokens correctly', () => {
-      tokenService.clearTokens();
-
-      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith('accessToken');
-      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith('refreshToken');
-    });
-
-    it('should check if token is expired - valid token', () => {
-      const futureDate = new Date();
-      futureDate.setHours(futureDate.getHours() + 1);
-      const validToken = `header.${btoa(JSON.stringify({ exp: Math.floor(futureDate.getTime() / 1000) }))}.signature`;
-
-      const isExpired = tokenService.isTokenExpired(validToken);
-
-      expect(isExpired).toBe(false);
-    });
-
-    it('should check if token is expired - expired token', () => {
-      const pastDate = new Date();
-      pastDate.setHours(pastDate.getHours() - 1);
-      const expiredToken = `header.${btoa(JSON.stringify({ exp: Math.floor(pastDate.getTime() / 1000) }))}.signature`;
-
-      const isExpired = tokenService.isTokenExpired(expiredToken);
-
-      expect(isExpired).toBe(true);
-    });
-
-    it('should check if token is expired - invalid token', () => {
-      const isExpired = tokenService.isTokenExpired('invalid-token');
-
-      expect(isExpired).toBe(true);
-    });
   });
 
   describe('Authentication', () => {
@@ -263,56 +181,41 @@ describe('AuthService', () => {
     });
   });
 
-  describe('User Info', () => {
-    it('should get current user from valid token', () => {
-      const userData = { sub: '1', username: 'testuser' };
-      const token = `header.${btoa(JSON.stringify(userData))}.signature`;
+  describe('Logout', () => {
+    it('should clear tokens on logout', () => {
+      authService.logout();
 
-      mockSessionStorage.getItem.mockReturnValue(token);
-
-      const user = tokenService.getCurrentUser();
-
-      expect(user).toEqual({ id: '1', username: 'testuser' });
+      expect(tokenService.clearTokens).toHaveBeenCalled();
     });
+  });
 
-    it('should return null for invalid token', () => {
-      mockSessionStorage.getItem.mockReturnValue('invalid-token');
-
-      const user = tokenService.getCurrentUser();
-
-      expect(user).toBeNull();
-    });
-
-    it('should return null when no token', () => {
-      mockSessionStorage.getItem.mockReturnValue(null);
-
-      const user = tokenService.getCurrentUser();
-
-      expect(user).toBeNull();
-    });
-
+  describe('Authentication Status', () => {
     it('should check authentication status', () => {
-      const futureDate = new Date();
-      futureDate.setHours(futureDate.getHours() + 1);
-      const validToken = `header.${btoa(JSON.stringify({ exp: Math.floor(futureDate.getTime() / 1000) }))}.signature`;
+      (tokenService.isAuthenticated as any).mockReturnValue(true);
 
-      mockSessionStorage.getItem.mockReturnValue(validToken);
+      const result = authService.isAuthenticated();
 
-      const isAuthenticated = tokenService.isAuthenticated();
-
-      expect(isAuthenticated).toBe(true);
+      expect(tokenService.isAuthenticated).toHaveBeenCalled();
+      expect(result).toBe(true);
     });
 
-    it('should return false for expired token', () => {
-      const pastDate = new Date();
-      pastDate.setHours(pastDate.getHours() - 1);
-      const expiredToken = `header.${btoa(JSON.stringify({ exp: Math.floor(pastDate.getTime() / 1000) }))}.signature`;
+    it('should get current user', () => {
+      const mockUser = { id: '1', username: 'testuser' };
+      (tokenService.getCurrentUser as any).mockReturnValue(mockUser);
 
-      mockSessionStorage.getItem.mockReturnValue(expiredToken);
+      const result = authService.getCurrentUser();
 
-      const isAuthenticated = tokenService.isAuthenticated();
+      expect(tokenService.getCurrentUser).toHaveBeenCalled();
+      expect(result).toEqual(mockUser);
+    });
 
-      expect(isAuthenticated).toBe(false);
+    it('should return null when no user', () => {
+      (tokenService.getCurrentUser as any).mockReturnValue(null);
+
+      const result = authService.getCurrentUser();
+
+      expect(tokenService.getCurrentUser).toHaveBeenCalled();
+      expect(result).toBeNull();
     });
   });
 });

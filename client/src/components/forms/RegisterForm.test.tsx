@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RegisterForm } from './RegisterForm';
 import '../../i18n'; // Load and configure i18n for tests
@@ -166,11 +166,13 @@ describe('RegisterForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Create Account' });
 
     // Fill out and submit the form
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
-    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+      fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
+      fireEvent.click(submitButton);
+    });
 
     // Check loading state
     await waitFor(() => {
@@ -179,7 +181,9 @@ describe('RegisterForm', () => {
     });
 
     // Resolve the promise to finish loading
-    resolveRegister!();
+    await act(async () => {
+      resolveRegister!();
+    });
   });
 
   it('shows error message on registration failure', async () => {
@@ -255,11 +259,13 @@ describe('RegisterForm', () => {
     const switchButton = screen.getByText('Sign In');
 
     // Fill out and submit the form
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
-    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+      fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
+      fireEvent.click(submitButton);
+    });
 
     // Check that form elements are disabled during submission
     await waitFor(() => {
@@ -272,6 +278,8 @@ describe('RegisterForm', () => {
     });
 
     // Resolve the promise to finish loading
-    resolveRegister!();
+    await act(async () => {
+      resolveRegister!();
+    });
   });
 });
