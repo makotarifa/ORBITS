@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { authService } from '../services/auth/auth.service';
+import { tokenService } from '../services/token/token.service';
 
 // Define User interface locally since it's not in auth types
 interface User {
@@ -36,10 +37,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for existing authentication on app start
     const initializeAuth = async () => {
       try {
-        const token = authService.getToken();
-        if (token && !authService.isTokenExpired(token)) {
+        const token = tokenService.getToken();
+        if (token && !tokenService.isTokenExpired(token)) {
           // Try to get user info from token
-          const userInfo = authService.getCurrentUser();
+          const userInfo = tokenService.getCurrentUser();
           if (userInfo) {
             // For now, we'll need to fetch full user data from API
             // This is a placeholder - in a real app you'd have an endpoint to get current user
@@ -54,12 +55,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             });
           } else {
             // Token exists but invalid, clear it
-            authService.clearTokens();
+            tokenService.clearTokens();
           }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        authService.clearTokens();
+        tokenService.clearTokens();
       } finally {
         setIsLoading(false);
       }
@@ -75,7 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.success && response.data?.user && response.data?.access_token) {
         setUser(response.data.user);
-        authService.setTokens(response.data.access_token, response.data.refresh_token);
+        // Tokens are already stored by authService.login, no need to call setTokens again
       } else {
         throw new Error(response.message || 'Login failed');
       }
@@ -88,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = (): void => {
-    authService.clearTokens();
+    tokenService.clearTokens();
     setUser(null);
   };
 
@@ -99,7 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.success && response.data?.user && response.data?.access_token) {
         setUser(response.data.user);
-        authService.setTokens(response.data.access_token, response.data.refresh_token);
+        // Tokens are already stored by authService.register, no need to call setTokens again
       } else {
         throw new Error(response.message || 'Registration failed');
       }
@@ -112,9 +113,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async (): Promise<void> => {
     try {
-      const token = authService.getToken();
+      const token = tokenService.getToken();
       if (token) {
-        const userInfo = authService.getCurrentUser();
+        const userInfo = tokenService.getCurrentUser();
         if (userInfo) {
           // For now, we'll need to fetch full user data from API
           // This is a placeholder - in a real app you'd have an endpoint to get current user

@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthProvider, useAuth } from './AuthContext';
 import { authService } from '../services/auth/auth.service';
+import { tokenService } from '../services/token/token.service';
 
 // Mock the auth service
 vi.mock('../services/auth/auth.service', () => ({
@@ -9,11 +10,18 @@ vi.mock('../services/auth/auth.service', () => ({
     login: vi.fn(),
     register: vi.fn(),
     logout: vi.fn(),
+  },
+}));
+
+// Mock the token service
+vi.mock('../services/token/token.service', () => ({
+  tokenService: {
     getToken: vi.fn(),
     setTokens: vi.fn(),
     clearTokens: vi.fn(),
     isTokenExpired: vi.fn(),
     getCurrentUser: vi.fn(),
+    isAuthenticated: vi.fn(),
   },
 }));
 
@@ -140,7 +148,7 @@ describe('AuthContext', () => {
     const logoutButton = screen.getByTestId('logout-btn');
     fireEvent.click(logoutButton);
 
-    expect(authService.clearTokens).toHaveBeenCalled();
+    expect(tokenService.clearTokens).toHaveBeenCalled();
   });
 
   it('should throw error when useAuth is used outside provider', () => {
