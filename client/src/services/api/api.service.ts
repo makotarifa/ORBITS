@@ -1,12 +1,13 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ApiResponse } from '../../types/auth';
+import { GAME_CONSTANTS } from '../../constants/game.constants';
 
 class ApiService {
   private readonly axiosInstance: AxiosInstance;
 
   constructor() {
     this.axiosInstance = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+      baseURL: import.meta.env.VITE_API_URL || GAME_CONSTANTS.DEFAULTS.API_URL,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',

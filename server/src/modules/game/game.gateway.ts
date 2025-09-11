@@ -12,7 +12,7 @@ import { Logger, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { JwtWsGuard } from '../auth/guards/jwt-ws.guard';
-import { JoinRoomDto, LeaveRoomDto, PlayerMoveDto } from './dto/game-events.dto';
+import { JoinRoomDto, LeaveRoomDto, PlayerMoveDto, PlayerPositionDto } from './dto/game-events.dto';
 import { GAME_CONSTANTS } from './constants/game.constants';
 import { APP_CONSTANTS } from '../../constants/app.constants';
 
@@ -29,8 +29,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   private readonly logger: Logger = new Logger('GameGateway');
   private readonly rateLimitMap: Map<string, { count: number; resetTime: number }> = new Map();
+  private readonly positionRateLimitMap: Map<string, { count: number; resetTime: number }> = new Map();
   private readonly RATE_LIMIT_WINDOW = GAME_CONSTANTS.LIMITS.RATE_LIMIT_WINDOW; // 1 minute
   private readonly RATE_LIMIT_MAX = GAME_CONSTANTS.LIMITS.RATE_LIMIT_MAX; // 30 messages per minute
+  private readonly POSITION_RATE_LIMIT_WINDOW = GAME_CONSTANTS.LIMITS.POSITION_RATE_LIMIT_WINDOW; // 1 second
+  private readonly POSITION_RATE_LIMIT_MAX = GAME_CONSTANTS.LIMITS.POSITION_UPDATE_MAX_PER_SECOND;
 
   constructor(private readonly gameService: GameService) {}
 
@@ -42,7 +45,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       this.logger.log(`Client connected: ${client.id}`);
 
-      // Store client reference
+      // Store client reference with initial state
       this.gameService.addClient(client.id, client);
 
       // Send welcome message
@@ -66,8 +69,24 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   async handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
 
-    // Remove client from service
+    // Get player state before removal for cleanup
+    const playerState = this.gameService.getPlayerState(client.id);
+    
+    // Remove client from service (handles room cleanup)
     this.gameService.removeClient(client.id);
+
+    // Clean up rate limiting maps
+    this.rateLimitMap.delete(client.id);
+    this.positionRateLimitMap.delete(client.id);
+
+    // If player was in a room, notify other players
+    if (playerState?.roomId) {
+      client.to(playerState.roomId).emit(GAME_CONSTANTS.EVENTS.PLAYER_LEFT, {
+        playerId: client.id,
+        roomId: playerState.roomId,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     // Broadcast updated client count
     this.server.emit(GAME_CONSTANTS.EVENTS.CLIENTS_COUNT, {
@@ -96,6 +115,27 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     return true;
   }
 
+  private checkPositionRateLimit(clientId: string): boolean {
+    const now = Date.now();
+    const clientLimit = this.positionRateLimitMap.get(clientId);
+
+    if (!clientLimit || now > clientLimit.resetTime) {
+      // Reset or create new limit
+      this.positionRateLimitMap.set(clientId, {
+        count: 1,
+        resetTime: now + this.POSITION_RATE_LIMIT_WINDOW,
+      });
+      return true;
+    }
+
+    if (clientLimit.count >= this.POSITION_RATE_LIMIT_MAX) {
+      return false; // Rate limit exceeded
+    }
+
+    clientLimit.count++;
+    return true;
+  }
+
   @UseGuards(JwtWsGuard)
   @UsePipes(new ValidationPipe({ transform: true }))
   @SubscribeMessage('join-room')
@@ -113,14 +153,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
       this.logger.log(`Client ${client.id} joining room: ${roomId}`);
 
-      // Leave current room if any
-      // Note: In a real implementation, you'd track current room per client
-
-      // Join new room
+      // Join new room (service handles leaving previous room)
       this.gameService.joinRoom(client.id, roomId);
       client.join(roomId);
 
-      // Notify room members
+      // Get current room state for new player
+      const roomPlayersState = this.gameService.getRoomPlayersState(roomId);
+
+      // Notify room members about new player
       this.server.to(roomId).emit(GAME_CONSTANTS.EVENTS.PLAYER_JOINED, {
         playerId: client.id,
         playerData: client.data.user,
@@ -128,12 +168,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         timestamp: new Date().toISOString(),
       });
 
-      // Send room info to client
+      // Send room info and current players' positions to the new client
       const roomClients = this.gameService.getRoomClients(roomId);
       client.emit(GAME_CONSTANTS.EVENTS.ROOM_JOINED, {
         roomId,
         players: roomClients,
         playerCount: roomClients.length,
+        playersState: roomPlayersState.filter(p => p.playerId !== client.id), // Exclude self
       });
 
       this.logger.log(`Client ${client.id} successfully joined room ${roomId}`);
@@ -199,23 +240,69 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      if (!this.checkRateLimit(client.id)) {
+      // Use dedicated position rate limiting
+      if (!this.checkPositionRateLimit(client.id)) {
         return; // Silently drop rate limited movement updates
       }
 
       const { roomId, position, rotation, velocity } = data;
 
-      // Broadcast movement to other players in the room
-      client.to(roomId).emit(GAME_CONSTANTS.EVENTS.PLAYER_MOVED, {
-        playerId: client.id,
+      // Update player position with delta compression
+      const updateResult = this.gameService.updatePlayerPosition(
+        client.id,
         position,
         rotation,
         velocity,
-        timestamp: new Date().toISOString(),
-      });
+      );
+
+      // Only broadcast if there's a significant change
+      if (updateResult.shouldUpdate && updateResult.deltaData) {
+        // Broadcast movement to other players in the room
+        client.to(roomId).emit(GAME_CONSTANTS.EVENTS.PLAYER_MOVED, updateResult.deltaData);
+      }
 
     } catch (error) {
       this.logger.error(`Error handling player move for client ${client.id}:`, error);
+      client.emit(GAME_CONSTANTS.EVENTS.ERROR, {
+        message: GAME_CONSTANTS.MESSAGES.POSITION_SYNC_ERROR,
+      });
+    }
+  }
+
+  @UseGuards(JwtWsGuard)
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @SubscribeMessage('player-position')
+  handlePlayerPosition(
+    @MessageBody() data: PlayerPositionDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      // Use dedicated position rate limiting
+      if (!this.checkPositionRateLimit(client.id)) {
+        return; // Silently drop rate limited position updates
+      }
+
+      const { roomId, position, rotation, velocity } = data;
+
+      // Update player position with delta compression
+      const updateResult = this.gameService.updatePlayerPosition(
+        client.id,
+        position,
+        rotation,
+        velocity,
+      );
+
+      // Only broadcast if there's a significant change
+      if (updateResult.shouldUpdate && updateResult.deltaData) {
+        // Broadcast position update to other players in the room
+        client.to(roomId).emit(GAME_CONSTANTS.EVENTS.POSITION_UPDATE, updateResult.deltaData);
+      }
+
+    } catch (error) {
+      this.logger.error(`Error handling player position for client ${client.id}:`, error);
+      client.emit(GAME_CONSTANTS.EVENTS.ERROR, {
+        message: GAME_CONSTANTS.MESSAGES.POSITION_SYNC_ERROR,
+      });
     }
   }
 
