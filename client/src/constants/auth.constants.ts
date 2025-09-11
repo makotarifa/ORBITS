@@ -8,6 +8,9 @@ export const AUTH_CONSTANTS = {
     CREATE_ACCOUNT: 'auth.labels.createAccount',
     LOGIN: 'auth.labels.login',
   },
+  GENERAL: {
+    UNEXPECTED_ERROR: 'auth.messages.unexpectedError',
+  },
   PLACEHOLDERS: {
     EMAIL: 'auth.placeholders.email',
     PASSWORD: 'auth.placeholders.password',

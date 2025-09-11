@@ -37,7 +37,7 @@ type RegisterFormData = {
 export const useRegisterForm = (onSuccess?: () => void) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const { validation } = useAuthTranslations();
+  const { validation, general } = useAuthTranslations();
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(createRegisterSchema(validation)),
@@ -90,8 +90,8 @@ export const useRegisterForm = (onSuccess?: () => void) => {
         return { success: false, errors: apiErrors };
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      const generalError = { message: 'Unexpected error. Please try again.' };
+  console.error('Registration error:', error);
+  const generalError = { message: general.unexpectedError };
       setErrors({ general: generalError });
       return { success: false, errors: { general: generalError } };
     } finally {

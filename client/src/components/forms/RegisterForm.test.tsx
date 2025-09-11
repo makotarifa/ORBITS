@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RegisterForm } from './RegisterForm';
-import '../../i18n'; // Initialize i18n for tests
+import '../../i18n'; // Load and configure i18n for tests
 
 // Mock the hook
 const mockUseRegisterForm = vi.fn();

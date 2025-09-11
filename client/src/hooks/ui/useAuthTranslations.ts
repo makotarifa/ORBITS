@@ -30,7 +30,7 @@ export const useAuthTranslations = () => {
       joinBattle: t(AUTH_CONSTANTS.MESSAGES.JOIN_BATTLE),
       alreadyHaveAccount: t(AUTH_CONSTANTS.MESSAGES.ALREADY_HAVE_ACCOUNT),
     },
-    validation: {
+  validation: {
       emailRequired: t(AUTH_CONSTANTS.VALIDATION.EMAIL_REQUIRED),
       emailInvalid: t(AUTH_CONSTANTS.VALIDATION.EMAIL_INVALID),
       usernameRequired: t(AUTH_CONSTANTS.VALIDATION.USERNAME_REQUIRED),
@@ -42,6 +42,9 @@ export const useAuthTranslations = () => {
       passwordPattern: t(AUTH_CONSTANTS.VALIDATION.PASSWORD_PATTERN),
       confirmPasswordRequired: t(AUTH_CONSTANTS.VALIDATION.CONFIRM_PASSWORD_REQUIRED),
       passwordsNotMatch: t(AUTH_CONSTANTS.VALIDATION.PASSWORDS_NOT_MATCH),
+    },
+    general: {
+      unexpectedError: t(AUTH_CONSTANTS.GENERAL.UNEXPECTED_ERROR),
     },
   };
 };
