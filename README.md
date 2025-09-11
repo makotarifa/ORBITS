@@ -1,5 +1,12 @@
 # Orbits - Juego Espacial Multijugador
 
+[![CI/CD Pipeline](https://github.com/makotarifa/ORBITS/actions/workflows/ci.yml/badge.svg)](https://github.com/makotarifa/ORBITS/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/makotarifa/ORBITS/actions/workflows/security.yml/badge.svg)](https://github.com/makotarifa/ORBITS/actions/workflows/security.yml)
+[![Auto-merge](https://github.com/makotarifa/ORBITS/actions/workflows/auto-merge.yml/badge.svg)](https://github.com/makotarifa/ORBITS/actions/workflows/auto-merge.yml)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Un juego espacial multijugador desarrollado con React + Phaser.js en el frontend y NestJS + PostgreSQL en el backend, con soporte para exportación a desktop mediante Electron.
 
 ## 🚀 Tecnologías
@@ -150,6 +157,50 @@ orbits/
 - `npm run build:win` - Build para Windows
 - `npm run build:mac` - Build para macOS
 - `npm run build:linux` - Build para Linux
+
+## 🔄 CI/CD y Automatización
+
+Este proyecto utiliza GitHub Actions para automatizar el proceso de desarrollo y despliegue:
+
+### Workflows Disponibles
+
+#### 🚀 CI/CD Pipeline (`ci.yml`)
+- **Activación**: Push/PR en ramas `main`/`master`
+- **Funcionalidades**:
+  - Tests del servidor en Node.js 18.x y 20.x
+  - Tests del cliente con build de producción
+  - Linting y validación de código
+  - Tests unitarios y E2E
+  - Validación de Docker Compose
+  - Reporte de cobertura con Codecov
+
+#### 🔒 Security Scan (`security.yml`)
+- **Activación**: Push/PR diarios y programados (2 AM UTC)
+- **Funcionalidades**:
+  - Escaneo de vulnerabilidades npm
+  - Análisis de dependencias con Snyk
+  - Revisión de dependencias en PRs
+  - Alertas de seguridad automáticas
+
+#### 🤖 Auto-merge (`auto-merge.yml`)
+- **Activación**: PRs abiertas por Dependabot
+- **Funcionalidades**:
+  - Auto-merge automático de actualizaciones de dependencias
+  - Fusión con método squash
+  - Solo para PRs que pasan todas las verificaciones
+
+#### 📦 Dependabot (`dependabot.yml`)
+- **Actualizaciones semanales** (lunes 9:00 AM):
+  - Dependencias npm en `/server`, `/client`, `/electron`, `/shared`
+  - Acciones de GitHub
+  - Límite de 10 PRs abiertas por directorio
+  - Mensajes de commit estandarizados
+
+### Configuración de Base de Datos para CI
+Los tests utilizan mocks para los repositorios de TypeORM, por lo que no requieren una conexión real a base de datos. Esto hace que los tests sean más rápidos y confiables en el entorno de CI.
+
+### Cobertura de Código
+Los reportes de cobertura se suben automáticamente a Codecov y se muestran en los badges del README.
 
 ## 🎮 Funcionalidades
 
