@@ -16,6 +16,12 @@ export interface RegisterRequest {
   confirmPassword: string;
 }
 
+export interface RegisterApiRequest {
+  email: string;
+  username: string;
+  password: string;
+}
+
 export interface RegisterResponse {
   access_token: string;
   user: {

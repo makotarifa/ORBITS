@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { authService } from '../services/auth/auth.service';
-import { RegisterRequest, FormErrors } from '../types/auth';
+import { RegisterApiRequest, FormErrors } from '../types/auth';
 import { useAuthTranslations } from './ui/useAuthTranslations';
 
 // Dynamic validation schema using i18n
@@ -54,14 +54,14 @@ export const useRegisterForm = (onSuccess?: () => void) => {
     setErrors({});
 
     try {
-      const registerData: RegisterRequest = {
+      // Remove confirmPassword before sending to backend (backend validates it internally)
+      const dataToSend: RegisterApiRequest = {
         email: data.email,
         username: data.username,
         password: data.password,
-        confirmPassword: data.confirmPassword,
       };
 
-      const response = await authService.register(registerData);
+      const response = await authService.register(dataToSend);
 
       if (response.success) {
         // Registration successful - store token
