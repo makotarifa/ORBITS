@@ -12,19 +12,45 @@ interface GameViewProps {
 export const GameView: React.FC<GameViewProps> = ({ onLogout }) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<Phaser.Game | null>(null);
+  const hasInitializedRef = useRef(false);
   const [isGameReady, setIsGameReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  console.log('GameView: Current state -', { isGameReady, isConnecting, error });
+
+  // Initialize game on component mount
   useEffect(() => {
-    const initializeGame = async () => {
-      if (!gameRef.current || phaserGameRef.current) return;
+    // Prevent re-initialization
+    if (hasInitializedRef.current) {
+      console.log('GameView: Game already initialized, skipping...');
+      return;
+    }
 
+    console.log('GameView: Initializing game...');
+    hasInitializedRef.current = true;
+
+    const initializeGame = async () => {
+      console.log('GameView: initializeGame called');
+      console.log('GameView: gameRef.current =', gameRef.current);
+      console.log('GameView: phaserGameRef.current =', phaserGameRef.current);
+      
       try {
+        // Small delay to allow React dev mode double-invocation to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Connect to socket first with authentication
         setIsConnecting(true);
-        await socketService.connectWithAuth();
+        console.log('GameView: Starting socket connection...');
         
-        // Configure Phaser game
+        // Check if already connected, if not connect
+        if (!socketService.isConnected()) {
+            console.log("GameView: Socket not connected, initiating connection...");
+          await socketService.connect();
+        } else {
+            console.log("GameView: Socket already connected");
+        }
+        console.log('GameView: Socket connected successfully');        // Configure Phaser game
         const config: Phaser.Types.Core.GameConfig = {
           type: Phaser.AUTO,
           width: GAME_CONSTANTS.DEFAULTS.GAME_WORLD.WIDTH,
@@ -48,32 +74,45 @@ export const GameView: React.FC<GameViewProps> = ({ onLogout }) => {
         };
 
         // Create the Phaser game
+        console.log('GameView: Creating Phaser game...');
         phaserGameRef.current = new Phaser.Game(config);
-        
-        // Wait a bit for the game to initialize
-        setTimeout(() => {
+        console.log('GameView: Phaser game created, waiting for initialization...');
+
+        // Wait for the game to be ready before accessing scenes
+        phaserGameRef.current.events.once('ready', () => {
+          console.log('GameView: Phaser game is ready');
+          // Game is now ready - scenes have been created and initialized
+          console.log('GameView: Game initialization complete');
           setIsGameReady(true);
           setIsConnecting(false);
-        }, 1000);
+        });
 
       } catch (error) {
         console.error('Failed to initialize game:', error);
         setIsConnecting(false);
-        // Could show error state here
+        setError(error instanceof Error ? error.message : 'Failed to initialize game');
       }
     };
 
     initializeGame();
 
-    // Cleanup on unmount
+    // Cleanup only on actual unmount
     return () => {
+      // This only runs when component unmounts
+    };
+  }, []); // Empty dependency array - only run once on mount
+
+  // Separate effect for socket cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // This only runs when component unmounts
       if (phaserGameRef.current) {
         phaserGameRef.current.destroy(true);
         phaserGameRef.current = null;
       }
       socketService.disconnect();
     };
-  }, []);
+  }, []); // Empty dependency array - only runs on mount/unmount
 
   const handleLogout = () => {
     // Clean up socket connection
@@ -89,21 +128,10 @@ export const GameView: React.FC<GameViewProps> = ({ onLogout }) => {
     onLogout();
   };
 
-  if (isConnecting) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-          <h2 className="text-xl font-bold text-white mb-2">Connecting to Game Server</h2>
-          <p className="text-slate-300">Initializing your spaceship...</p>
-        </div>
-      </div>
-    );
-  }
-
+  console.log('GameView: Rendering main game view');
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
-      {/* Phaser Game Container */}
+      {/* Phaser Game Container - Always render so DOM is available */}
       <div 
         ref={gameRef} 
         className="absolute top-0 left-0 w-full h-full"
@@ -114,7 +142,35 @@ export const GameView: React.FC<GameViewProps> = ({ onLogout }) => {
         }}
       />
       
-      {/* React UI Overlay */}
+      {/* Loading Overlay */}
+      {isConnecting && (
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center z-50">
+          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <h2 className="text-xl font-bold text-white mb-2">Connecting to Game Server</h2>
+            <p className="text-slate-300">Initializing your spaceship...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Overlay */}
+      {error && (
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center z-50">
+          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-8 text-center max-w-md">
+            <div className="text-red-400 text-4xl mb-4">⚠️</div>
+            <h2 className="text-xl font-bold text-white mb-2">Connection Failed</h2>
+            <p className="text-slate-300 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* React UI Overlay - Only show when game is ready */}
       {isGameReady && (
         <>
           <GameUI className="z-10" />
