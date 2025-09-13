@@ -9,6 +9,8 @@ export class LocalPlayerEntity extends BasePlayerEntity {
   private readonly acceleration: number = 800; // Acceleration for smoother movement
   private readonly friction: number = 0.85; // Friction for momentum
   private readonly rotationSpeed: number = 5; // Rotation smoothing speed
+  private readonly FRICTION_FRAME_RATE = 60;
+  private readonly BOUNCE_ENERGY_LOSS = 0.3;
   private lastPositionUpdate: number = 0;
   private readonly positionUpdateInterval: number = 50; // Send position every 50ms
 
@@ -85,8 +87,8 @@ export class LocalPlayerEntity extends BasePlayerEntity {
 
   private applyFriction(delta: number): void {
     const deltaTime = delta / 1000;
-    this.velocity.x *= Math.pow(this.friction, deltaTime * 60); // Apply friction per frame
-    this.velocity.y *= Math.pow(this.friction, deltaTime * 60);
+    this.velocity.x *= Math.pow(this.friction, deltaTime * this.FRICTION_FRAME_RATE); // Apply friction per frame
+    this.velocity.y *= Math.pow(this.friction, deltaTime * this.FRICTION_FRAME_RATE);
   }
 
   private updatePositionFromVelocity(delta: number): void {
@@ -103,10 +105,10 @@ export class LocalPlayerEntity extends BasePlayerEntity {
 
     // Bounce off boundaries (reduce velocity when hitting edges)
     if (this.currentPosition.x <= bounds.MIN_X || this.currentPosition.x >= bounds.MAX_X) {
-      this.velocity.x *= -0.3; // Bounce with energy loss
+      this.velocity.x *= -this.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
     }
     if (this.currentPosition.y <= bounds.MIN_Y || this.currentPosition.y >= bounds.MAX_Y) {
-      this.velocity.y *= -0.3; // Bounce with energy loss
+      this.velocity.y *= -this.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
     }
   }
 
