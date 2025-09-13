@@ -5,14 +5,7 @@ import { GAME_CONSTANTS } from '../../constants/game.constants';
 
 export class LocalPlayerEntity extends BasePlayerEntity {
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
-  private readonly moveSpeed: number = 200;
-  private readonly acceleration: number = 800; // Acceleration for smoother movement
-  private readonly friction: number = 0.85; // Friction for momentum
-  private readonly rotationSpeed: number = 5; // Rotation smoothing speed
-  private readonly FRICTION_FRAME_RATE = 60;
-  private readonly BOUNCE_ENERGY_LOSS = 0.3;
   private lastPositionUpdate: number = 0;
-  private readonly positionUpdateInterval: number = 50; // Send position every 50ms
 
   constructor(config: PlayerEntityConfig) {
     super({ ...config, isLocal: true, color: 0x0000ff }); // Blue for local player
@@ -73,11 +66,11 @@ export class LocalPlayerEntity extends BasePlayerEntity {
     }
 
     // Apply acceleration to velocity
-    this.velocity.x += inputVector.x * this.acceleration * deltaTime;
-    this.velocity.y += inputVector.y * this.acceleration * deltaTime;
+    this.velocity.x += inputVector.x * GAME_CONSTANTS.DEFAULTS.PLAYER.ACCELERATION * deltaTime;
+    this.velocity.y += inputVector.y * GAME_CONSTANTS.DEFAULTS.PLAYER.ACCELERATION * deltaTime;
 
     // Limit maximum velocity
-    const maxSpeed = this.moveSpeed;
+    const maxSpeed = GAME_CONSTANTS.DEFAULTS.PLAYER.MOVE_SPEED;
     const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
     if (currentSpeed > maxSpeed) {
       this.velocity.x = (this.velocity.x / currentSpeed) * maxSpeed;
@@ -87,8 +80,8 @@ export class LocalPlayerEntity extends BasePlayerEntity {
 
   private applyFriction(delta: number): void {
     const deltaTime = delta / 1000;
-    this.velocity.x *= Math.pow(this.friction, deltaTime * this.FRICTION_FRAME_RATE); // Apply friction per frame
-    this.velocity.y *= Math.pow(this.friction, deltaTime * this.FRICTION_FRAME_RATE);
+    this.velocity.x *= Math.pow(GAME_CONSTANTS.DEFAULTS.PLAYER.FRICTION, deltaTime * GAME_CONSTANTS.DEFAULTS.PLAYER.FRICTION_FRAME_RATE); // Apply friction per frame
+    this.velocity.y *= Math.pow(GAME_CONSTANTS.DEFAULTS.PLAYER.FRICTION, deltaTime * GAME_CONSTANTS.DEFAULTS.PLAYER.FRICTION_FRAME_RATE);
   }
 
   private updatePositionFromVelocity(delta: number): void {
@@ -105,10 +98,10 @@ export class LocalPlayerEntity extends BasePlayerEntity {
 
     // Bounce off boundaries (reduce velocity when hitting edges)
     if (this.currentPosition.x <= bounds.MIN_X || this.currentPosition.x >= bounds.MAX_X) {
-      this.velocity.x *= -this.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
+      this.velocity.x *= -GAME_CONSTANTS.DEFAULTS.PLAYER.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
     }
     if (this.currentPosition.y <= bounds.MIN_Y || this.currentPosition.y >= bounds.MAX_Y) {
-      this.velocity.y *= -this.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
+      this.velocity.y *= -GAME_CONSTANTS.DEFAULTS.PLAYER.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
     }
   }
 
@@ -129,7 +122,7 @@ export class LocalPlayerEntity extends BasePlayerEntity {
     while (rotationDiff < -Math.PI) rotationDiff += 2 * Math.PI;
 
     // Apply smooth rotation
-    this.sprite.rotation += rotationDiff * this.rotationSpeed * deltaTime;
+    this.sprite.rotation += rotationDiff * GAME_CONSTANTS.DEFAULTS.PLAYER.ROTATION_SPEED * deltaTime;
 
     // Update player rotation for server sync
     this.playerRotation = this.sprite.rotation;
@@ -142,7 +135,7 @@ export class LocalPlayerEntity extends BasePlayerEntity {
     const now = Date.now();
 
     // Throttle position updates to server
-    if (now - this.lastPositionUpdate > this.positionUpdateInterval) {
+    if (now - this.lastPositionUpdate > GAME_CONSTANTS.DEFAULTS.PLAYER.POSITION_UPDATE_INTERVAL) {
       this.lastPositionUpdate = now;
 
       // Emit position update event (will be handled by the game scene)
