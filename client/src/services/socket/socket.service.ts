@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { GAME_CONSTANTS } from '../../constants/game.constants';
+import { tokenService } from '../token/token.service';
 import {
   PlayerMoveDto,
   PlayerPositionDto,
@@ -43,12 +44,19 @@ export interface SocketEvents {
 
 export class SocketService {
   private socket: Socket | null = null;
+  private connectionPromise: Promise<void> | null = null;
+  private isConnecting = false;
   private reconnectAttempts = 0;
   private readonly maxReconnectAttempts = GAME_CONSTANTS.SOCKET.MAX_RECONNECT_ATTEMPTS;
   private readonly reconnectDelay = GAME_CONSTANTS.SOCKET.RECONNECT_DELAY;
 
-  constructor() {
-    this.initializeSocket();
+  private getAuthToken(): string | undefined {
+    try {
+      return tokenService.getToken() || undefined;
+    } catch (error) {
+      console.warn('Failed to get auth token:', error);
+      return undefined;
+    }
   }
 
   private initializeSocket(): void {
@@ -62,6 +70,9 @@ export class SocketService {
         reconnection: GAME_CONSTANTS.SOCKET.RECONNECTION,
         reconnectionAttempts: this.maxReconnectAttempts,
         reconnectionDelay: this.reconnectDelay,
+        auth: {
+          token: this.getAuthToken(),
+        },
       });
 
       this.setupEventListeners();
@@ -133,40 +144,82 @@ export class SocketService {
 
   // Connection management
   public connect(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    // If already connecting, return the existing promise
+    if (this.isConnecting && this.connectionPromise) {
+      console.log('Socket connection already in progress, returning existing promise');
+      return this.connectionPromise;
+    }
+
+    this.isConnecting = true;
+
+    this.connectionPromise = new Promise((resolve, reject) => {
+      // Initialize socket if it doesn't exist
       if (!this.socket) {
+        try {
+          this.initializeSocket();
+        } catch (error) {
+          this.isConnecting = false;
+          reject(error instanceof Error ? error : new Error(String(error)));
+          return;
+        }
+      }
+
+      if (!this.socket) {
+        this.isConnecting = false;
         reject(new Error(GAME_CONSTANTS.MESSAGES.SOCKET_NOT_INITIALIZED));
         return;
       }
 
       if (this.socket.connected) {
+        this.isConnecting = false;
         resolve();
         return;
       }
 
       const timeout = setTimeout(() => {
+        this.isConnecting = false;
         reject(new Error(GAME_CONSTANTS.MESSAGES.CONNECTION_TIMEOUT));
       }, GAME_CONSTANTS.SOCKET.CONNECTION_TIMEOUT);
 
       this.socket.once(GAME_CONSTANTS.EVENTS.CONNECT, () => {
         clearTimeout(timeout);
+        this.isConnecting = false;
         resolve();
       });
 
       this.socket.once(GAME_CONSTANTS.EVENTS.CONNECT_ERROR, (error: Error) => {
         clearTimeout(timeout);
+        this.isConnecting = false;
         reject(error);
       });
 
       this.socket.connect();
     });
+
+    return this.connectionPromise;
+  }
+
+  public connectWithAuth(): Promise<void> {
+    // Reinitialize socket with current auth token
+    this.disconnect();
+    this.initializeSocket();
+    return this.connect();
   }
 
   public disconnect(): void {
+    // Don't disconnect if we're in the middle of connecting
+    if (this.isConnecting) {
+      console.log('Socket is connecting, skipping disconnect to prevent connection interruption');
+      return;
+    }
+
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
     }
+
+    // Reset connection state
+    this.connectionPromise = null;
   }
 
   public isConnected(): boolean {
