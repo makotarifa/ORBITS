@@ -9,13 +9,13 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className = 
   const { isConnected, connectionError } = useConnectionState();
 
   const getStatusColor = () => {
-    if (connectionError !== null) return 'text-red-500';
+    if (connectionError?.trim()) return 'text-red-500';
     if (isConnected) return 'text-green-500';
     return 'text-yellow-500';
   };
 
   const getStatusText = () => {
-    if (connectionError !== null) return 'Connection Error';
+    if (connectionError?.trim()) return 'Connection Error';
     if (isConnected) return 'Connected';
     return 'Connecting...';
   };

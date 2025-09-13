@@ -96,6 +96,8 @@ class MockSprite {
 }
 
 // Mock phaser3spectorjs to prevent module not found errors
+// Although the phaser3spectorjs dependency was removed, this mock is retained
+// to prevent module not found errors in tests that may still reference it.
 vi.mock('phaser3spectorjs', () => ({}));
 
 // Mock canvas and WebGL context for Phaser tests
