@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { GAME_CONSTANTS } from '../../constants/game.constants';
+import { tokenService } from '../token/token.service';
 import {
   PlayerMoveDto,
   PlayerPositionDto,
@@ -51,6 +52,10 @@ export class SocketService {
     this.initializeSocket();
   }
 
+  private getAuthToken(): string | null {
+    return tokenService.getToken();
+  }
+
   private initializeSocket(): void {
     try {
       const serverUrl = import.meta.env.VITE_SERVER_URL || GAME_CONSTANTS.DEFAULTS.SERVER_URL;
@@ -62,6 +67,9 @@ export class SocketService {
         reconnection: GAME_CONSTANTS.SOCKET.RECONNECTION,
         reconnectionAttempts: this.maxReconnectAttempts,
         reconnectionDelay: this.reconnectDelay,
+        auth: {
+          token: this.getAuthToken(),
+        },
       });
 
       this.setupEventListeners();
@@ -160,6 +168,13 @@ export class SocketService {
 
       this.socket.connect();
     });
+  }
+
+  public connectWithAuth(): Promise<void> {
+    // Reinitialize socket with current auth token
+    this.disconnect();
+    this.initializeSocket();
+    return this.connect();
   }
 
   public disconnect(): void {
