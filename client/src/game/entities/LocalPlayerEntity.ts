@@ -6,6 +6,9 @@ import { GAME_CONSTANTS } from '../../constants/game.constants';
 export class LocalPlayerEntity extends BasePlayerEntity {
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private readonly moveSpeed: number = 200;
+  private readonly acceleration: number = 800; // Acceleration for smoother movement
+  private readonly friction: number = 0.85; // Friction for momentum
+  private readonly rotationSpeed: number = 5; // Rotation smoothing speed
   private lastPositionUpdate: number = 0;
   private readonly positionUpdateInterval: number = 50; // Send position every 50ms
 
@@ -32,12 +35,9 @@ export class LocalPlayerEntity extends BasePlayerEntity {
 
   public update(delta: number): void {
     this.handleInput(delta);
-    this.updatePositionFromInput();
-
-    // Update visual rotation based on movement direction
-    if (this.velocity.x !== 0 || this.velocity.y !== 0) {
-      this.sprite.rotation = Math.atan2(this.velocity.y, this.velocity.x);
-    }
+    this.applyFriction(delta);
+    this.updatePositionFromVelocity(delta);
+    this.updateRotation(delta);
 
     // Update container position
     this.setPosition(this.currentPosition.x, this.currentPosition.y);
@@ -47,41 +47,96 @@ export class LocalPlayerEntity extends BasePlayerEntity {
     if (!this.keys) return;
 
     const deltaTime = delta / 1000; // Convert to seconds
-    let newVelocity = { x: 0, y: 0 };
+    let inputVector = { x: 0, y: 0 };
 
     // Handle WASD keys
     if (this.keys.W.isDown || this.keys.UP.isDown) {
-      newVelocity.y = -this.moveSpeed;
+      inputVector.y = -1;
     }
     if (this.keys.S.isDown || this.keys.DOWN.isDown) {
-      newVelocity.y = this.moveSpeed;
+      inputVector.y = 1;
     }
     if (this.keys.A.isDown || this.keys.LEFT.isDown) {
-      newVelocity.x = -this.moveSpeed;
+      inputVector.x = -1;
     }
     if (this.keys.D.isDown || this.keys.RIGHT.isDown) {
-      newVelocity.x = this.moveSpeed;
+      inputVector.x = 1;
     }
 
-    // Normalize diagonal movement
-    if (newVelocity.x !== 0 && newVelocity.y !== 0) {
-      const length = Math.sqrt(newVelocity.x * newVelocity.x + newVelocity.y * newVelocity.y);
-      newVelocity.x = (newVelocity.x / length) * this.moveSpeed;
-      newVelocity.y = (newVelocity.y / length) * this.moveSpeed;
+    // Normalize input vector for consistent acceleration
+    if (inputVector.x !== 0 || inputVector.y !== 0) {
+      const length = Math.sqrt(inputVector.x * inputVector.x + inputVector.y * inputVector.y);
+      inputVector.x /= length;
+      inputVector.y /= length;
     }
 
-    this.updateVelocity(newVelocity);
+    // Apply acceleration to velocity
+    this.velocity.x += inputVector.x * this.acceleration * deltaTime;
+    this.velocity.y += inputVector.y * this.acceleration * deltaTime;
 
-    // Update position based on velocity
-    this.currentPosition.x += newVelocity.x * deltaTime;
-    this.currentPosition.y += newVelocity.y * deltaTime;
-
-    // Keep player within bounds (simple boundary check)
-    this.currentPosition.x = Phaser.Math.Clamp(this.currentPosition.x, GAME_CONSTANTS.DEFAULTS.MOVEMENT_BOUNDS.MIN_X, GAME_CONSTANTS.DEFAULTS.MOVEMENT_BOUNDS.MAX_X);
-    this.currentPosition.y = Phaser.Math.Clamp(this.currentPosition.y, GAME_CONSTANTS.DEFAULTS.MOVEMENT_BOUNDS.MIN_Y, GAME_CONSTANTS.DEFAULTS.MOVEMENT_BOUNDS.MAX_Y);
+    // Limit maximum velocity
+    const maxSpeed = this.moveSpeed;
+    const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    if (currentSpeed > maxSpeed) {
+      this.velocity.x = (this.velocity.x / currentSpeed) * maxSpeed;
+      this.velocity.y = (this.velocity.y / currentSpeed) * maxSpeed;
+    }
   }
 
-  private updatePositionFromInput(): void {
+  private applyFriction(delta: number): void {
+    const deltaTime = delta / 1000;
+    this.velocity.x *= Math.pow(this.friction, deltaTime * 60); // Apply friction per frame
+    this.velocity.y *= Math.pow(this.friction, deltaTime * 60);
+  }
+
+  private updatePositionFromVelocity(delta: number): void {
+    const deltaTime = delta / 1000;
+
+    // Update position based on velocity
+    this.currentPosition.x += this.velocity.x * deltaTime;
+    this.currentPosition.y += this.velocity.y * deltaTime;
+
+    // Keep player within bounds with smooth boundary collision
+    const bounds = GAME_CONSTANTS.DEFAULTS.MOVEMENT_BOUNDS;
+    this.currentPosition.x = Phaser.Math.Clamp(this.currentPosition.x, bounds.MIN_X, bounds.MAX_X);
+    this.currentPosition.y = Phaser.Math.Clamp(this.currentPosition.y, bounds.MIN_Y, bounds.MAX_Y);
+
+    // Bounce off boundaries (reduce velocity when hitting edges)
+    if (this.currentPosition.x <= bounds.MIN_X || this.currentPosition.x >= bounds.MAX_X) {
+      this.velocity.x *= -0.3; // Bounce with energy loss
+    }
+    if (this.currentPosition.y <= bounds.MIN_Y || this.currentPosition.y >= bounds.MAX_Y) {
+      this.velocity.y *= -0.3; // Bounce with energy loss
+    }
+  }
+
+  private updateRotation(delta: number): void {
+    const deltaTime = delta / 1000;
+
+    // Calculate target rotation based on velocity direction
+    let targetRotation = this.sprite.rotation;
+    if (this.velocity.x !== 0 || this.velocity.y !== 0) {
+      targetRotation = Math.atan2(this.velocity.y, this.velocity.x);
+    }
+
+    // Smooth rotation interpolation
+    let rotationDiff = targetRotation - this.sprite.rotation;
+
+    // Normalize rotation difference to [-PI, PI]
+    while (rotationDiff > Math.PI) rotationDiff -= 2 * Math.PI;
+    while (rotationDiff < -Math.PI) rotationDiff += 2 * Math.PI;
+
+    // Apply smooth rotation
+    this.sprite.rotation += rotationDiff * this.rotationSpeed * deltaTime;
+
+    // Update player rotation for server sync
+    this.playerRotation = this.sprite.rotation;
+
+    // Send position updates to server at regular intervals
+    this.sendPositionUpdate();
+  }
+
+  private sendPositionUpdate(): void {
     const now = Date.now();
 
     // Throttle position updates to server

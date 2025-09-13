@@ -28,6 +28,38 @@ export const GAME_CONSTANTS = {
     ATTEMPTS: 'attempts',
     RECONNECT_FAILED: 'Failed to reconnect to game server',
   },
+  UI: {
+    LABELS: {
+      ROOM_ID: 'Room ID',
+      GAME_CONTROLS: 'Game Controls',
+      INSTRUCTIONS: 'Instructions',
+      CONTROLS: 'Controls',
+      CONNECTED_TO: 'Connected to:',
+    },
+    PLACEHOLDERS: {
+      ENTER_ROOM_ID: 'Enter room ID',
+    },
+    BUTTONS: {
+      JOIN_ROOM: 'Join Room',
+      LEAVE_ROOM: 'Leave Room',
+    },
+    INSTRUCTIONS: {
+      MOVE_KEYS: 'WASD or Arrow Keys: Move',
+      CAMERA_FOLLOW: 'Camera follows your player',
+      JOIN_ROOMS: 'Join rooms to play with others',
+      REAL_TIME_POSITIONS: 'See real-time player positions',
+      USE_MOVE_KEYS: 'Use WASD or Arrow Keys to move',
+      CAMERA_AUTO_FOLLOW: 'Camera automatically follows you',
+    },
+    STATUS: {
+      CONNECTING: 'Connecting...',
+      CONNECTED: 'Connected',
+      DISCONNECTED: 'Disconnected',
+      PLAYERS_COUNT: 'Players:',
+      ROOM: 'Room:',
+      NONE: 'None',
+    },
+  },
   EVENTS: {
     CONNECTED: 'connected',
     DISCONNECTED: 'disconnected',
