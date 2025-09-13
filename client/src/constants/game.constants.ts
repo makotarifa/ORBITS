@@ -28,6 +28,38 @@ export const GAME_CONSTANTS = {
     ATTEMPTS: 'attempts',
     RECONNECT_FAILED: 'Failed to reconnect to game server',
   },
+  UI: {
+    LABELS: {
+      ROOM_ID: 'Room ID',
+      GAME_CONTROLS: 'Game Controls',
+      INSTRUCTIONS: 'Instructions',
+      CONTROLS: 'Controls',
+      CONNECTED_TO: 'Connected to:',
+    },
+    PLACEHOLDERS: {
+      ENTER_ROOM_ID: 'Enter room ID',
+    },
+    BUTTONS: {
+      JOIN_ROOM: 'Join Room',
+      LEAVE_ROOM: 'Leave Room',
+    },
+    INSTRUCTIONS: {
+      MOVE_KEYS: 'WASD or Arrow Keys: Move',
+      CAMERA_FOLLOW: 'Camera follows your player',
+      JOIN_ROOMS: 'Join rooms to play with others',
+      REAL_TIME_POSITIONS: 'See real-time player positions',
+      USE_MOVE_KEYS: 'Use WASD or Arrow Keys to move',
+      CAMERA_AUTO_FOLLOW: 'Camera automatically follows you',
+    },
+    STATUS: {
+      CONNECTING: 'Connecting...',
+      CONNECTED: 'Connected',
+      DISCONNECTED: 'Disconnected',
+      PLAYERS_COUNT: 'Players:',
+      ROOM: 'Room:',
+      NONE: 'None',
+    },
+  },
   EVENTS: {
     CONNECTED: 'connected',
     DISCONNECTED: 'disconnected',
@@ -67,6 +99,15 @@ export const GAME_CONSTANTS = {
     RECONNECTION: true,
     MAX_RECONNECT_ATTEMPTS: 5,
     RECONNECT_DELAY: 1000,
+  },
+  PLAYER: {
+    MOVE_SPEED: 200,
+    ACCELERATION: 800,
+    FRICTION: 0.85,
+    ROTATION_SPEED: 5,
+    FRICTION_FRAME_RATE: 60,
+    BOUNCE_ENERGY_LOSS: 0.3,
+    POSITION_UPDATE_INTERVAL: 50,
   },
   // Default values
   DEFAULTS: {
