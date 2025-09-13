@@ -100,21 +100,21 @@ export const GAME_CONSTANTS = {
     MAX_RECONNECT_ATTEMPTS: 5,
     RECONNECT_DELAY: 1000,
   },
+  PLAYER: {
+    MOVE_SPEED: 200,
+    ACCELERATION: 800,
+    FRICTION: 0.85,
+    ROTATION_SPEED: 5,
+    FRICTION_FRAME_RATE: 60,
+    BOUNCE_ENERGY_LOSS: 0.3,
+    POSITION_UPDATE_INTERVAL: 50,
+  },
   // Default values
   DEFAULTS: {
     SERVER_URL: 'http://localhost:3000',
     API_URL: 'http://localhost:3000',
     ROOM_ID: 'main-room',
     PLAYER_POSITION: { x: 400, y: 300 },
-    PLAYER: {
-      MOVE_SPEED: 200,
-      ACCELERATION: 800,
-      FRICTION: 0.85,
-      ROTATION_SPEED: 5,
-      FRICTION_FRAME_RATE: 60,
-      BOUNCE_ENERGY_LOSS: 0.3,
-      POSITION_UPDATE_INTERVAL: 50,
-    },
     GAME_WORLD: {
       WIDTH: 800,
       HEIGHT: 600,

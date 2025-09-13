@@ -70,7 +70,7 @@ export class LocalPlayerEntity extends BasePlayerEntity {
     this.velocity.y += inputVector.y * GAME_CONSTANTS.DEFAULTS.PLAYER.ACCELERATION * deltaTime;
 
     // Limit maximum velocity
-    const maxSpeed = GAME_CONSTANTS.DEFAULTS.PLAYER.MOVE_SPEED;
+    const maxSpeed = GAME_CONSTANTS.PLAYER.MOVE_SPEED;
     const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
     if (currentSpeed > maxSpeed) {
       this.velocity.x = (this.velocity.x / currentSpeed) * maxSpeed;
@@ -80,8 +80,8 @@ export class LocalPlayerEntity extends BasePlayerEntity {
 
   private applyFriction(delta: number): void {
     const deltaTime = delta / 1000;
-    this.velocity.x *= Math.pow(GAME_CONSTANTS.DEFAULTS.PLAYER.FRICTION, deltaTime * GAME_CONSTANTS.DEFAULTS.PLAYER.FRICTION_FRAME_RATE); // Apply friction per frame
-    this.velocity.y *= Math.pow(GAME_CONSTANTS.DEFAULTS.PLAYER.FRICTION, deltaTime * GAME_CONSTANTS.DEFAULTS.PLAYER.FRICTION_FRAME_RATE);
+    this.velocity.x *= Math.pow(GAME_CONSTANTS.PLAYER.FRICTION, deltaTime * GAME_CONSTANTS.PLAYER.FRICTION_FRAME_RATE); // Apply friction per frame
+    this.velocity.y *= Math.pow(GAME_CONSTANTS.PLAYER.FRICTION, deltaTime * GAME_CONSTANTS.PLAYER.FRICTION_FRAME_RATE);
   }
 
   private updatePositionFromVelocity(delta: number): void {
@@ -98,10 +98,10 @@ export class LocalPlayerEntity extends BasePlayerEntity {
 
     // Bounce off boundaries (reduce velocity when hitting edges)
     if (this.currentPosition.x <= bounds.MIN_X || this.currentPosition.x >= bounds.MAX_X) {
-      this.velocity.x *= -GAME_CONSTANTS.DEFAULTS.PLAYER.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
+      this.velocity.x *= -GAME_CONSTANTS.PLAYER.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
     }
     if (this.currentPosition.y <= bounds.MIN_Y || this.currentPosition.y >= bounds.MAX_Y) {
-      this.velocity.y *= -GAME_CONSTANTS.DEFAULTS.PLAYER.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
+      this.velocity.y *= -GAME_CONSTANTS.PLAYER.BOUNCE_ENERGY_LOSS; // Bounce with energy loss
     }
   }
 
@@ -122,7 +122,7 @@ export class LocalPlayerEntity extends BasePlayerEntity {
     while (rotationDiff < -Math.PI) rotationDiff += 2 * Math.PI;
 
     // Apply smooth rotation
-    this.sprite.rotation += rotationDiff * GAME_CONSTANTS.DEFAULTS.PLAYER.ROTATION_SPEED * deltaTime;
+    this.sprite.rotation += rotationDiff * GAME_CONSTANTS.PLAYER.ROTATION_SPEED * deltaTime;
 
     // Update player rotation for server sync
     this.playerRotation = this.sprite.rotation;
@@ -135,7 +135,7 @@ export class LocalPlayerEntity extends BasePlayerEntity {
     const now = Date.now();
 
     // Throttle position updates to server
-    if (now - this.lastPositionUpdate > GAME_CONSTANTS.DEFAULTS.PLAYER.POSITION_UPDATE_INTERVAL) {
+    if (now - this.lastPositionUpdate > GAME_CONSTANTS.PLAYER.POSITION_UPDATE_INTERVAL) {
       this.lastPositionUpdate = now;
 
       // Emit position update event (will be handled by the game scene)
