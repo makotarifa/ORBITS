@@ -8,6 +8,8 @@ export const GAME_CONSTANTS = {
     INVALID_ROOM_DATA: 'Invalid room data provided',
     RATE_LIMIT_EXCEEDED: 'Rate limit exceeded',
     UNAUTHORIZED: 'Unauthorized access',
+    AUTHENTICATION_FAILED: 'Authentication failed - invalid or missing token',
+    CONNECTION_DENIED: 'Connection denied due to authentication failure',
     INVALID_MOVE_DATA: 'Invalid player move data',
     SERVER_ERROR: 'Internal server error',
     POSITION_SYNC_ERROR: 'Failed to synchronize player position',

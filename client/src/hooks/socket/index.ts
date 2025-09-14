@@ -2,6 +2,7 @@
 export { useSocket } from './useSocket';
 export { useGameEvents } from './useGameEvents';
 export { usePlayer } from './usePlayer';
+export { useConnectionState as useSocketConnectionState } from './useConnectionState';
 
 // Re-export types for convenience
 export type { UseSocketReturn } from './useSocket';

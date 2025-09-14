@@ -12,6 +12,9 @@ import { Logger, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { JwtWsGuard } from '../auth/guards/jwt-ws.guard';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { AuthService } from '../auth/auth.service';
 import { JoinRoomDto, LeaveRoomDto, PlayerMoveDto, PlayerPositionDto } from './dto/game-events.dto';
 import { GAME_CONSTANTS } from './constants/game.constants';
 import { APP_CONSTANTS } from '../../constants/app.constants';
@@ -35,23 +38,87 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   private readonly POSITION_RATE_LIMIT_WINDOW = GAME_CONSTANTS.LIMITS.POSITION_RATE_LIMIT_WINDOW; // 1 second
   private readonly POSITION_RATE_LIMIT_MAX = GAME_CONSTANTS.LIMITS.POSITION_UPDATE_MAX_PER_SECOND;
 
-  constructor(private readonly gameService: GameService) {}
+  constructor(
+    private readonly gameService: GameService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly authService: AuthService,
+  ) {}
 
   afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
   }
 
+  private async authenticateConnection(client: Socket): Promise<{ success: boolean; user?: any; error?: string }> {
+    try {
+      // Extract token from various possible locations
+      const token = client.handshake.auth?.token ||
+                   client.handshake.headers?.authorization?.replace('Bearer ', '') ||
+                   client.handshake.query?.token as string;
+
+      if (!token) {
+        return { success: false, error: 'No authentication token provided' };
+      }
+
+      // Verify JWT token
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+
+      // Validate user exists and is active
+      const user = await this.authService.validateUser(payload.sub);
+      if (!user) {
+        return { success: false, error: 'User not found or inactive' };
+      }
+
+      return { 
+        success: true, 
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        }
+      };
+    } catch (error) {
+      this.logger.error(`WebSocket authentication error for client ${client.id}:`, error.message);
+      return { success: false, error: 'Invalid or expired token' };
+    }
+  }
+
   async handleConnection(client: Socket, ...args: any[]) {
     try {
-      this.logger.log(`Client connected: ${client.id}`);
+      this.logger.log(`Client attempting connection: ${client.id}`);
+
+      // Authenticate the connection
+      const authResult = await this.authenticateConnection(client);
+      if (!authResult.success) {
+        this.logger.warn(`Authentication failed for client ${client.id}: ${authResult.error}`);
+        
+        // Send authentication error to client before disconnecting
+        client.emit(GAME_CONSTANTS.EVENTS.ERROR, {
+          message: GAME_CONSTANTS.MESSAGES.AUTHENTICATION_FAILED,
+          error: authResult.error,
+          timestamp: new Date().toISOString(),
+        });
+
+        // Disconnect the client after a short delay to allow error message to be sent
+        setTimeout(() => client.disconnect(), 100);
+        return;
+      }
+
+      // Store authenticated user data in client
+      client.data.user = authResult.user;
+
+      this.logger.log(`Client authenticated successfully: ${client.id} (user: ${authResult.user.username})`);
 
       // Store client reference with initial state
       this.gameService.addClient(client.id, client);
 
-      // Send welcome message
+      // Send welcome message with user info
       client.emit(GAME_CONSTANTS.EVENTS.CONNECTED, {
         message: GAME_CONSTANTS.MESSAGES.CONNECTION_SUCCESS,
         clientId: client.id,
+        user: authResult.user,
         timestamp: new Date().toISOString(),
       });
 
@@ -62,6 +129,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     } catch (error) {
       this.logger.error(`Connection error for client ${client.id}:`, error);
+      
+      // Send error message before disconnecting
+      client.emit(GAME_CONSTANTS.EVENTS.ERROR, {
+        message: GAME_CONSTANTS.MESSAGES.SERVER_ERROR,
+        timestamp: new Date().toISOString(),
+      });
+      
       client.disconnect();
     }
   }

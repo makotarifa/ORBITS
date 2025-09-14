@@ -10,7 +10,19 @@ vi.mock('../../services/socket/socket.service', () => ({
     isConnected: vi.fn(() => false),
     getSocketId: vi.fn(() => undefined),
     onNative: vi.fn(),
-    offNative: vi.fn()
+    offNative: vi.fn(),
+    onError: vi.fn(),
+    offError: vi.fn(),
+    onRecovery: vi.fn(),
+    offRecovery: vi.fn(),
+    getCurrentError: vi.fn(() => null),
+    getConnectionHealth: vi.fn(() => ({
+      isHealthy: true,
+      issues: [],
+      recommendations: []
+    })),
+    clearCurrentError: vi.fn(),
+    forceReconnect: vi.fn()
   }
 }));
 
