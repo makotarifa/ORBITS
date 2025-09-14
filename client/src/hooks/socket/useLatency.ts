@@ -46,7 +46,7 @@ export const useLatency = (): UseLatencyReturn => {
     }
   }, [latency, averageLatency]);
 
-  const handlePong = useCallback((data: PongEvent) => {
+  const handlePong = useCallback((_data: PongEvent) => {
     if (pingStartTimeRef.current !== null) {
       const endTime = Date.now();
       const pingTime = endTime - pingStartTimeRef.current;
@@ -59,8 +59,6 @@ export const useLatency = (): UseLatencyReturn => {
       
       // Add measurement to store
       addLatencyMeasurement(pingTime);
-      
-      console.log(`Ping: ${pingTime}ms`);
     }
     
     pingStartTimeRef.current = null;
@@ -81,7 +79,6 @@ export const useLatency = (): UseLatencyReturn => {
     
     // Set timeout for no response
     pingTimeoutRef.current = setTimeout(() => {
-      console.warn('Ping timeout - no pong received');
       pingStartTimeRef.current = null;
       pingTimeoutRef.current = null;
     }, GAME_CONSTANTS.LATENCY.TIMEOUT);
@@ -95,7 +92,6 @@ export const useLatency = (): UseLatencyReturn => {
       return;
     }
 
-    console.log('Starting latency measurement');
     setLatencyMeasuring(true);
 
     // Send initial ping immediately
@@ -112,7 +108,6 @@ export const useLatency = (): UseLatencyReturn => {
       return;
     }
 
-    console.log('Stopping latency measurement');
     setLatencyMeasuring(false);
 
     // Clear interval
@@ -160,12 +155,10 @@ export const useLatency = (): UseLatencyReturn => {
   // Listen to connection state changes
   useEffect(() => {
     const handleConnect = () => {
-      console.log('Connected - starting latency measurement');
       startLatencyMeasurement();
     };
 
     const handleDisconnect = () => {
-      console.log('Disconnected - stopping latency measurement');
       stopLatencyMeasurement();
       clearLatencyHistory();
     };

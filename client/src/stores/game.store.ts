@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { PlayerState } from '../types/game-events.types';
+import { GAME_CONSTANTS } from '../constants/game.constants';
 
 export interface GameState {
   // Connection state
@@ -110,7 +111,7 @@ export const useGameStore = create<GameStore>()(
       set((state) => {
         const newHistory = [...state.latencyHistory, latency];
         // Keep only the last MAX_HISTORY measurements
-        const maxHistory = 10; // GAME_CONSTANTS.LATENCY.MAX_HISTORY
+        const maxHistory = GAME_CONSTANTS.LATENCY.MAX_HISTORY;
         if (newHistory.length > maxHistory) {
           newHistory.shift();
         }
