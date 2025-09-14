@@ -4,3 +4,4 @@ export { PlayerList } from './PlayerList';
 export { RoomInfo } from './RoomInfo';
 export { GameControls } from './GameControls';
 export { GameUI } from './GameUI';
+export { GameView } from './GameView';
