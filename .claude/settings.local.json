@@ -41,7 +41,17 @@
       "Bash(npm install)",
       "Bash(git init:*)",
       "Bash(gh api:*)",
-      "mcp__atlassian__getJiraProjectIssueTypesMetadata"
+      "mcp__atlassian__getJiraProjectIssueTypesMetadata",
+      "Bash(timeout 10 npm run test:unit)",
+      "Bash(npm run:*)",
+      "Bash(timeout 10 npm test)",
+      "Bash(timeout 10 npm test ConnectionStatus.test.tsx)",
+      "Bash(timeout 10 npm test useConnectionState.test.ts)",
+      "mcp__atlassian__editJiraIssue",
+      "Bash(git pull:*)",
+      "Bash(npm test:*)",
+      "Read(\\d\\CodePractice/**)",
+      "Read(\\d\\CodePractice/**)"
     ],
     "deny": [],
     "ask": [],

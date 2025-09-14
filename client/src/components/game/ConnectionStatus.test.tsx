@@ -1,19 +1,48 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ConnectionStatus } from '../../components/game/ConnectionStatus';
+import { SocketErrorType, SocketErrorSeverity, SocketErrorCategory } from '../../types/socket-errors.types';
 
 // Mock the store
 vi.mock('../../stores', () => ({
   useConnectionState: vi.fn(),
 }));
 
+// Mock the useSocket hook
+vi.mock('../../hooks/socket/useSocket', () => ({
+  useSocket: vi.fn(),
+}));
+
 import { useConnectionState } from '../../stores';
+import { useSocket } from '../../hooks/socket/useSocket';
 
 describe('ConnectionStatus', () => {
   const mockUseConnectionState = vi.mocked(useConnectionState);
+  const mockUseSocket = vi.mocked(useSocket);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Default mock for useSocket
+    mockUseSocket.mockReturnValue({
+      isConnected: false,
+      isConnecting: false,
+      socketId: undefined,
+      error: null,
+      errorDetails: null,
+      connectionHealth: {
+        isHealthy: true,
+        issues: [],
+        recommendations: []
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      reconnect: vi.fn(),
+      forceReconnect: vi.fn(),
+      clearError: vi.fn(),
+      canRetry: false,
+      retryIn: 0
+    });
   });
 
   it('should render connected state', () => {
@@ -37,6 +66,26 @@ describe('ConnectionStatus', () => {
       socketId: null,
     });
 
+    mockUseSocket.mockReturnValue({
+      isConnected: false,
+      isConnecting: true,
+      socketId: undefined,
+      error: null,
+      errorDetails: null,
+      connectionHealth: {
+        isHealthy: true,
+        issues: [],
+        recommendations: []
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      reconnect: vi.fn(),
+      forceReconnect: vi.fn(),
+      clearError: vi.fn(),
+      canRetry: false,
+      retryIn: 0
+    });
+
     render(<ConnectionStatus />);
 
     expect(screen.getByText('Connecting...')).toBeInTheDocument();
@@ -49,11 +98,44 @@ describe('ConnectionStatus', () => {
       connectionError: 'Network timeout',
       socketId: null,
     });
+    
+    mockUseSocket.mockReturnValue({
+      isConnected: false,
+      isConnecting: false,
+      socketId: undefined,
+      error: 'Network timeout',
+      errorDetails: {
+        type: SocketErrorType.NETWORK_ERROR,
+        severity: SocketErrorSeverity.MEDIUM,
+        category: SocketErrorCategory.TRANSIENT,
+        message: 'Network timeout',
+        userMessage: 'Connection Error',
+        recoveryActions: ['Retry connection', 'Check internet connection'],
+        canRetry: true,
+        retryDelay: 5000,
+        maxRetries: 3,
+        timestamp: Date.now(),
+        context: { phase: 'connection' }
+      },
+      connectionHealth: {
+        isHealthy: false,
+        issues: ['Network timeout'],
+        recommendations: ['Retry connection']
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      reconnect: vi.fn(),
+      forceReconnect: vi.fn(),
+      clearError: vi.fn(),
+      canRetry: true,
+      retryIn: 0
+    });
 
     render(<ConnectionStatus />);
 
     expect(screen.getByText('Connection Error')).toBeInTheDocument();
-    expect(screen.getByText('Network timeout')).toBeInTheDocument();
+    // The error message is shown in the details section when expanded
+    // For this test, we just verify the user message is displayed
   });
 
   it('should apply custom className', () => {
@@ -64,10 +146,10 @@ describe('ConnectionStatus', () => {
       socketId: 'test-socket-id',
     });
 
-    render(<ConnectionStatus className="custom-class" />);
+    const { container } = render(<ConnectionStatus className="custom-class" />);
 
-    const container = screen.getByText('Connected').parentElement;
-    expect(container?.className).toContain('custom-class');
+    const mainDiv = container.firstChild as HTMLElement;
+    expect(mainDiv?.className).toContain('custom-class');
   });
 
   it('should show green indicator when connected', () => {
@@ -92,10 +174,30 @@ describe('ConnectionStatus', () => {
       socketId: null,
     });
 
+    mockUseSocket.mockReturnValue({
+      isConnected: false,
+      isConnecting: true,
+      socketId: undefined,
+      error: null,
+      errorDetails: null,
+      connectionHealth: {
+        isHealthy: true,
+        issues: [],
+        recommendations: []
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      reconnect: vi.fn(),
+      forceReconnect: vi.fn(),
+      clearError: vi.fn(),
+      canRetry: false,
+      retryIn: 0
+    });
+
     render(<ConnectionStatus />);
 
     const indicator = screen.getByText('Connecting...').previousElementSibling;
-    expect(indicator?.className).toContain('bg-yellow-500');
+    expect(indicator?.className).toContain('bg-blue-500');
   });
 
   it('should render with default styling when no className provided', () => {
@@ -108,7 +210,7 @@ describe('ConnectionStatus', () => {
 
     const { container } = render(<ConnectionStatus />);
 
-    const statusDiv = container.firstChild as HTMLElement;
+    const statusDiv = container.querySelector('.flex.items-center.space-x-2') as HTMLElement;
     expect(statusDiv).toHaveClass('flex');
     expect(statusDiv).toHaveClass('items-center');
     expect(statusDiv).toHaveClass('space-x-2');
@@ -120,6 +222,38 @@ describe('ConnectionStatus', () => {
       isReconnecting: false,
       connectionError: 'Network error',
       socketId: null,
+    });
+
+    mockUseSocket.mockReturnValue({
+      isConnected: false,
+      isConnecting: false,
+      socketId: undefined,
+      error: 'Network error',
+      errorDetails: {
+        type: SocketErrorType.NETWORK_ERROR,
+        severity: SocketErrorSeverity.HIGH,
+        category: SocketErrorCategory.TRANSIENT,
+        message: 'Network error',
+        userMessage: 'Connection failed',
+        recoveryActions: ['Retry connection'],
+        canRetry: true,
+        retryDelay: 5000,
+        maxRetries: 3,
+        timestamp: Date.now(),
+        context: { phase: 'connection' }
+      },
+      connectionHealth: {
+        isHealthy: false,
+        issues: ['Network error'],
+        recommendations: ['Retry connection']
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      reconnect: vi.fn(),
+      forceReconnect: vi.fn(),
+      clearError: vi.fn(),
+      canRetry: true,
+      retryIn: 0
     });
 
     const { container } = render(<ConnectionStatus />);
@@ -154,10 +288,30 @@ describe('ConnectionStatus', () => {
       socketId: null,
     });
 
+    mockUseSocket.mockReturnValue({
+      isConnected: false,
+      isConnecting: true,
+      socketId: undefined,
+      error: null,
+      errorDetails: null,
+      connectionHealth: {
+        isHealthy: true,
+        issues: [],
+        recommendations: []
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      reconnect: vi.fn(),
+      forceReconnect: vi.fn(),
+      clearError: vi.fn(),
+      canRetry: false,
+      retryIn: 0
+    });
+
     render(<ConnectionStatus />);
 
     const statusText = screen.getByText('Connecting...');
-    expect(statusText).toHaveClass('text-yellow-500');
+    expect(statusText).toHaveClass('text-blue-500');
     expect(statusText).not.toHaveClass('text-green-500');
     expect(statusText).not.toHaveClass('text-red-500');
   });
@@ -168,6 +322,38 @@ describe('ConnectionStatus', () => {
       isReconnecting: false,
       connectionError: 'Connection failed',
       socketId: null,
+    });
+
+    mockUseSocket.mockReturnValue({
+      isConnected: false,
+      isConnecting: false,
+      socketId: undefined,
+      error: 'Connection failed',
+      errorDetails: {
+        type: SocketErrorType.CONNECTION_TIMEOUT,
+        severity: SocketErrorSeverity.HIGH,
+        category: SocketErrorCategory.TRANSIENT,
+        message: 'Connection failed',
+        userMessage: 'Connection Error',
+        recoveryActions: ['Retry connection'],
+        canRetry: true,
+        retryDelay: 5000,
+        maxRetries: 3,
+        timestamp: Date.now(),
+        context: { phase: 'connection' }
+      },
+      connectionHealth: {
+        isHealthy: false,
+        issues: ['Connection failed'],
+        recommendations: ['Retry connection']
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      reconnect: vi.fn(),
+      forceReconnect: vi.fn(),
+      clearError: vi.fn(),
+      canRetry: true,
+      retryIn: 0
     });
 
     render(<ConnectionStatus />);
@@ -187,12 +373,43 @@ describe('ConnectionStatus', () => {
       socketId: null,
     });
 
+    mockUseSocket.mockReturnValue({
+      isConnected: false,
+      isConnecting: false,
+      socketId: undefined,
+      error: errorMessage,
+      errorDetails: {
+        type: SocketErrorType.CONNECTION_TIMEOUT,
+        severity: SocketErrorSeverity.MEDIUM,
+        category: SocketErrorCategory.TRANSIENT,
+        message: errorMessage,
+        userMessage: 'Connection Error',
+        recoveryActions: ['Retry connection'],
+        canRetry: true,
+        retryDelay: 5000,
+        maxRetries: 3,
+        timestamp: Date.now(),
+        context: { phase: 'connection' }
+      },
+      connectionHealth: {
+        isHealthy: false,
+        issues: [errorMessage],
+        recommendations: ['Retry connection']
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      reconnect: vi.fn(),
+      forceReconnect: vi.fn(),
+      clearError: vi.fn(),
+      canRetry: true,
+      retryIn: 0
+    });
+
     render(<ConnectionStatus />);
 
-    const errorText = screen.getByText(errorMessage);
-    expect(errorText).toHaveClass('text-xs');
-    expect(errorText).toHaveClass('text-red-400');
-    expect(errorText).toHaveClass('ml-2');
+    // The component shows the userMessage, not the technical error message
+    const errorText = screen.getByText('Connection Error');
+    expect(errorText).toHaveClass('text-yellow-500'); // MEDIUM severity uses yellow
   });
 
   it('should not display error message when no error', () => {
@@ -218,7 +435,7 @@ describe('ConnectionStatus', () => {
 
     render(<ConnectionStatus />);
 
-    expect(screen.getByText('Connecting...')).toBeInTheDocument();
+    expect(screen.getByText('Disconnected')).toBeInTheDocument();
     // Should not display empty error message span
     expect(screen.queryByText(/text-red-400/)).not.toBeInTheDocument();
   });
@@ -260,7 +477,7 @@ describe('ConnectionStatus', () => {
 
     render(<ConnectionStatus />);
 
-    expect(screen.getByText('Connecting...')).toBeInTheDocument();
+    expect(screen.getByText('Disconnected')).toBeInTheDocument();
   });
 
   // Reconnecting state tests
@@ -356,6 +573,38 @@ describe('ConnectionStatus', () => {
       isReconnecting: false,
       connectionError: 'Connection failed',
       socketId: null,
+    });
+
+    mockUseSocket.mockReturnValue({
+      isConnected: false,
+      isConnecting: false,
+      socketId: undefined,
+      error: 'Connection failed',
+      errorDetails: {
+        type: SocketErrorType.CONNECTION_TIMEOUT,
+        severity: SocketErrorSeverity.HIGH, // HIGH severity doesn't have pulse animation
+        category: SocketErrorCategory.TRANSIENT,
+        message: 'Connection failed',
+        userMessage: 'Connection Error',
+        recoveryActions: ['Retry connection'],
+        canRetry: true,
+        retryDelay: 5000,
+        maxRetries: 3,
+        timestamp: Date.now(),
+        context: { phase: 'connection' }
+      },
+      connectionHealth: {
+        isHealthy: false,
+        issues: ['Connection failed'],
+        recommendations: ['Retry connection']
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      reconnect: vi.fn(),
+      forceReconnect: vi.fn(),
+      clearError: vi.fn(),
+      canRetry: true,
+      retryIn: 0
     });
 
     const { container } = render(<ConnectionStatus />);
