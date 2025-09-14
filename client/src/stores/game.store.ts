@@ -5,6 +5,7 @@ import { PlayerState } from '../types/game-events.types';
 export interface GameState {
   // Connection state
   isConnected: boolean;
+  isReconnecting: boolean;
   connectionError: string | null;
   socketId: string | null;
 
@@ -32,6 +33,7 @@ export interface GameState {
 export interface GameActions {
   // Connection actions
   setConnected: (connected: boolean) => void;
+  setReconnecting: (reconnecting: boolean) => void;
   setConnectionError: (error: string | null) => void;
   setSocketId: (socketId: string | null) => void;
 
@@ -64,6 +66,7 @@ export type GameStore = GameState & GameActions;
 
 const initialState: GameState = {
   isConnected: false,
+  isReconnecting: false,
   connectionError: null,
   socketId: null,
   currentRoom: null,
@@ -82,7 +85,8 @@ export const useGameStore = create<GameStore>()(
     ...initialState,
 
     // Connection actions
-    setConnected: (connected: boolean) => set({ isConnected: connected }),
+    setConnected: (connected: boolean) => set({ isConnected: connected, isReconnecting: false }),
+    setReconnecting: (reconnecting: boolean) => set({ isReconnecting: reconnecting }),
     setConnectionError: (error: string | null) => set({ connectionError: error }),
     setSocketId: (socketId: string | null) => set({ socketId }),
 
@@ -155,6 +159,7 @@ export const useGameStore = create<GameStore>()(
 // Selectors for commonly used state slices
 export const useConnectionState = () => useGameStore((state) => ({
   isConnected: state.isConnected,
+  isReconnecting: state.isReconnecting,
   connectionError: state.connectionError,
   socketId: state.socketId,
 }));
