@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { socketService } from '../../services/socket/socket.service';
-import { SocketErrorDetails, SocketErrorType } from '../../types/socket-errors.types';
+import { SocketErrorDetails } from '../../types/socket-errors.types';
 
 export interface UseSocketReturn {
   isConnected: boolean;

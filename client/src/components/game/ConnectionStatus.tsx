@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useConnectionState } from '../../stores';
 import { useSocket } from '../../hooks/socket/useSocket';
-import { SocketErrorType, SocketErrorSeverity } from '../../types/socket-errors.types';
+import { SocketErrorSeverity } from '../../types/socket-errors.types';
 
 interface ConnectionStatusProps {
   className?: string;

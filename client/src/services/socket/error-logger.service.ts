@@ -1,4 +1,5 @@
 import { SocketErrorDetails, SocketErrorMetrics } from '../../types/socket-errors.types';
+import { JwtUtils } from '../../utils';
 
 export interface LogEntry {
   id: string;
@@ -124,19 +125,10 @@ class ErrorLoggerService {
   }
 
   private getCurrentUserId(): string | undefined {
-    try {
-      // Try to get user ID from token service or auth context
-      const token = sessionStorage.getItem('accessToken');
-      if (token) {
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-          return undefined;
-        }
-        const payload = JSON.parse(atob(parts[1]));
-        return payload.sub || payload.userId;
-      }
-    } catch (error) {
-      // Ignore token parsing errors
+    // Try to get user ID from token service or auth context
+    const token = sessionStorage.getItem('accessToken');
+    if (token) {
+      return JwtUtils.getJwtUserId(token);
     }
     return undefined;
   }
@@ -198,7 +190,7 @@ class ErrorLoggerService {
     }
 
     if (filters?.since) {
-      filteredLogs = filteredLogs.filter(log => log.timestamp >= filters.since);
+      filteredLogs = filteredLogs.filter(log => log.timestamp >= filters.since!);
     }
 
     if (filters?.limit) {

@@ -21,12 +21,12 @@ import {
   SocketErrorDetails,
   SocketErrorClassifier,
   SocketConnectionError,
-  SocketErrorMetrics,
-  SocketErrorType
+  SocketErrorMetrics
 } from '../../types/socket-errors.types';
 import { authService } from '../auth/auth.service';
 import { tokenService } from '../token/token.service';
 import { errorLogger } from './error-logger.service';
+import { JwtUtils } from '../../utils';
 
 export interface SocketEvents {
   // Server to Client
@@ -109,7 +109,7 @@ export class SocketService {
       } catch (callbackError) {
         console.error('Error in error callback:', callbackError);
         errorLogger.log('error', 'callback', 'Error in error callback', { 
-          callbackError: callbackError.toString() 
+          callbackError: String(callbackError) 
         });
       }
     });
@@ -200,7 +200,7 @@ export class SocketService {
 
   // JWT token handling methods
   private handleTokenExpired(): void {
-    const errorDetails = this.handleError({
+    this.handleError({
       message: 'JWT token has expired',
       code: 'TOKEN_EXPIRED',
       type: 'authentication'
@@ -246,7 +246,7 @@ export class SocketService {
         return false;
       }
     } catch (error) {
-      this.handleError(error, {
+      this.handleError(error as Error, {
         phase: 'authentication',
         tokenRefreshError: true
       });
@@ -306,27 +306,10 @@ export class SocketService {
       }
 
       // Check if token will expire in the next 5 minutes
-      try {
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-          throw new Error('Invalid JWT token structure');
-        }
-        const payloadJson = atob(parts[1]);
-        const payload = JSON.parse(payloadJson);
-        if (!payload || typeof payload.exp !== 'number') {
-          throw new Error('JWT payload missing exp field');
-        }
-        const expiryTime = payload.exp * 1000; // Convert to milliseconds
-        const timeUntilExpiry = expiryTime - Date.now();
-        const fiveMinutes = 5 * 60 * 1000;
-
-        if (timeUntilExpiry <= fiveMinutes && timeUntilExpiry > 0) {
-          // Token will expire soon, attempt preemptive refresh
-          console.log('Token expiring soon, attempting preemptive refresh');
-          this.attemptTokenRefresh();
-        }
-      } catch (error) {
-        console.warn('Failed to parse token for expiry check:', error);
+      if (JwtUtils.isJwtExpiringSoon(token, 5)) {
+        // Token will expire soon, attempt preemptive refresh
+        console.log('Token expiring soon, attempting preemptive refresh');
+        this.attemptTokenRefresh();
       }
     }, 30000);
 
@@ -370,7 +353,7 @@ export class SocketService {
       this.setupTokenValidation();
 
     } catch (error) {
-      this.handleError(error, {
+      this.handleError(error as Error, {
         phase: 'initialization',
         hasToken: !!tokenService.getToken()
       });
@@ -395,7 +378,7 @@ export class SocketService {
         } catch (callbackError) {
           console.error('Error in recovery callback:', callbackError);
           errorLogger.log('error', 'callback', 'Error in recovery callback', {
-            callbackError: callbackError.toString()
+            callbackError: String(callbackError)
           });
         }
       });
@@ -458,7 +441,7 @@ export class SocketService {
     });
 
     this.socket.on(GAME_CONSTANTS.EVENTS.RECONNECT_FAILED, () => {
-      const errorDetails = this.handleError({
+      this.handleError({
         message: 'All reconnection attempts failed',
         code: 'RECONNECT_FAILED',
         type: 'reconnection_failed'
@@ -537,33 +520,13 @@ export class SocketService {
         try {
           this.socket.connect();
         } catch (connectError) {
-          this.handleError(connectError, {
+          this.handleError(connectError as Error, {
             phase: 'reconnection',
             attempt: this.reconnectAttempts
           });
         }
       }
     }, delay);
-  }
-
-  // Legacy method for backward compatibility
-  private handleReconnection(): void {
-    if (this.currentError) {
-      this.handleReconnectionWithBackoff(this.currentError);
-    } else {
-      // Fallback to old behavior if no current error context
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
-        this.reconnectAttempts++;
-        const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-
-        setTimeout(() => {
-          console.log(`${GAME_CONSTANTS.MESSAGES.RECONNECTING} (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-          this.socket?.connect();
-        }, delay);
-      } else {
-        console.error(GAME_CONSTANTS.MESSAGES.MAX_RECONNECT_ATTEMPTS_REACHED);
-      }
-    }
   }
 
   // Connection management
@@ -616,7 +579,7 @@ export class SocketService {
         this.socket.connect();
       } catch (error) {
         clearTimeout(timeout);
-        const errorDetails = this.handleError(error, {
+        const errorDetails = this.handleError(error as Error, {
           phase: 'connection',
           method: 'connect'
         });
@@ -751,7 +714,7 @@ export class SocketService {
           await this.connect();
           resolve();
         } catch (error) {
-          reject(error);
+          reject(error instanceof Error ? error : new Error(String(error)));
         }
       }, 1000);
     });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SocketErrorDetails, SocketErrorSeverity, ErrorRecoveryStrategy, SocketErrorClassifier } from '../../types/socket-errors.types';
+import { SocketErrorDetails, SocketErrorSeverity, SocketErrorClassifier } from '../../types/socket-errors.types';
 
 interface ErrorRecoveryPanelProps {
   error: SocketErrorDetails;
