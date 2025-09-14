@@ -9,6 +9,9 @@ import { GAME_CONSTANTS } from './constants/game.constants';
 describe('GameGateway', () => {
   let gateway: GameGateway;
   let gameService: GameService;
+  let jwtService: JwtService;
+  let configService: ConfigService;
+  let authService: AuthService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -53,6 +56,9 @@ describe('GameGateway', () => {
 
     gateway = module.get<GameGateway>(GameGateway);
     gameService = module.get<GameService>(GameService);
+    jwtService = module.get<JwtService>(JwtService);
+    configService = module.get<ConfigService>(ConfigService);
+    authService = module.get<AuthService>(AuthService);
   });
 
   describe('Basic functionality', () => {
@@ -60,7 +66,13 @@ describe('GameGateway', () => {
       expect(gateway).toBeDefined();
     });
 
-    it('should handle connection', async () => {
+    it('should handle authenticated connection successfully', async () => {
+      const mockUser = {
+        id: 'user-123',
+        username: 'testuser',
+        email: 'test@example.com',
+      };
+
       const mockClient = {
         id: 'test-client',
         emit: jest.fn(),
@@ -70,7 +82,7 @@ describe('GameGateway', () => {
           headers: {},
           query: {},
         },
-        data: {},
+        data: {} as any,
       };
 
       const mockServer = {
@@ -81,16 +93,29 @@ describe('GameGateway', () => {
       // Mock the server
       (gateway as any).server = mockServer;
 
+      // Mock authentication services
+      jest.spyOn(jwtService, 'verifyAsync').mockResolvedValue({ sub: 'user-123', username: 'testuser' });
+      jest.spyOn(configService, 'get').mockReturnValue('test-secret');
+      jest.spyOn(authService, 'validateUser').mockResolvedValue(mockUser as any);
+
       // Mock game service methods
       jest.spyOn(gameService, 'addClient');
       jest.spyOn(gameService, 'getConnectedClientsCount').mockReturnValue(1);
 
       await gateway.handleConnection(mockClient as any);
 
+      expect(jwtService.verifyAsync).toHaveBeenCalledWith('valid-token', { secret: 'test-secret' });
+      expect(authService.validateUser).toHaveBeenCalledWith('user-123');
+      expect(mockClient.data.user).toEqual({
+        id: 'user-123',
+        username: 'testuser',
+        email: 'test@example.com',
+      });
       expect(gameService.addClient).toHaveBeenCalledWith('test-client', mockClient);
       expect(mockClient.emit).toHaveBeenCalledWith(GAME_CONSTANTS.EVENTS.CONNECTED, expect.objectContaining({
         message: GAME_CONSTANTS.MESSAGES.CONNECTION_SUCCESS,
         clientId: 'test-client',
+        user: mockUser,
       }));
       expect(mockServer.emit).toHaveBeenCalledWith(GAME_CONSTANTS.EVENTS.CLIENTS_COUNT, { count: 1 });
     });
@@ -341,6 +366,133 @@ describe('GameGateway', () => {
 
       // Should be rate limited
       expect(gateway_private.checkRateLimit('client1')).toBe(false);
+    });
+  });
+
+  describe('WebSocket Authentication', () => {
+    let mockClient: any;
+    let mockServer: any;
+
+    beforeEach(() => {
+      mockClient = {
+        id: 'test-client',
+        emit: jest.fn(),
+        disconnect: jest.fn(),
+        handshake: {
+          auth: {},
+          headers: {},
+          query: {},
+        },
+        data: {} as any,
+      };
+
+      mockServer = {
+        emit: jest.fn(),
+        to: jest.fn().mockReturnThis(),
+      };
+
+      (gateway as any).server = mockServer;
+    });
+
+    it('should reject connection with no token', async () => {
+      await gateway.handleConnection(mockClient);
+
+      expect(mockClient.emit).toHaveBeenCalledWith(GAME_CONSTANTS.EVENTS.ERROR, expect.objectContaining({
+        message: GAME_CONSTANTS.MESSAGES.AUTHENTICATION_FAILED,
+        error: 'No authentication token provided',
+      }));
+      
+      // Client should be disconnected after timeout
+      setTimeout(() => {
+        expect(mockClient.disconnect).toHaveBeenCalled();
+      }, 150);
+    });
+
+    it('should reject connection with invalid token', async () => {
+      mockClient.handshake.auth.token = 'invalid-token';
+      
+      jest.spyOn(jwtService, 'verifyAsync').mockRejectedValue(new Error('Invalid token'));
+      jest.spyOn(configService, 'get').mockReturnValue('test-secret');
+
+      await gateway.handleConnection(mockClient);
+
+      expect(jwtService.verifyAsync).toHaveBeenCalledWith('invalid-token', { secret: 'test-secret' });
+      expect(mockClient.emit).toHaveBeenCalledWith(GAME_CONSTANTS.EVENTS.ERROR, expect.objectContaining({
+        message: GAME_CONSTANTS.MESSAGES.AUTHENTICATION_FAILED,
+        error: 'Invalid or expired token',
+      }));
+      
+      setTimeout(() => {
+        expect(mockClient.disconnect).toHaveBeenCalled();
+      }, 150);
+    });
+
+    it('should reject connection when user not found', async () => {
+      mockClient.handshake.auth.token = 'valid-token';
+      
+      jest.spyOn(jwtService, 'verifyAsync').mockResolvedValue({ sub: 'user-123' });
+      jest.spyOn(configService, 'get').mockReturnValue('test-secret');
+      jest.spyOn(authService, 'validateUser').mockResolvedValue(null);
+
+      await gateway.handleConnection(mockClient);
+
+      expect(authService.validateUser).toHaveBeenCalledWith('user-123');
+      expect(mockClient.emit).toHaveBeenCalledWith(GAME_CONSTANTS.EVENTS.ERROR, expect.objectContaining({
+        message: GAME_CONSTANTS.MESSAGES.AUTHENTICATION_FAILED,
+        error: 'User not found or inactive',
+      }));
+      
+      setTimeout(() => {
+        expect(mockClient.disconnect).toHaveBeenCalled();
+      }, 150);
+    });
+
+    it('should extract token from authorization header', async () => {
+      const mockUser = {
+        id: 'user-123',
+        username: 'testuser',
+        email: 'test@example.com',
+      };
+
+      mockClient.handshake.headers.authorization = 'Bearer header-token';
+      
+      jest.spyOn(jwtService, 'verifyAsync').mockResolvedValue({ sub: 'user-123', username: 'testuser' });
+      jest.spyOn(configService, 'get').mockReturnValue('test-secret');
+      jest.spyOn(authService, 'validateUser').mockResolvedValue(mockUser as any);
+      jest.spyOn(gameService, 'addClient');
+      jest.spyOn(gameService, 'getConnectedClientsCount').mockReturnValue(1);
+
+      await gateway.handleConnection(mockClient);
+
+      expect(jwtService.verifyAsync).toHaveBeenCalledWith('header-token', { secret: 'test-secret' });
+      expect(mockClient.emit).toHaveBeenCalledWith(GAME_CONSTANTS.EVENTS.CONNECTED, expect.objectContaining({
+        message: GAME_CONSTANTS.MESSAGES.CONNECTION_SUCCESS,
+        user: mockUser,
+      }));
+    });
+
+    it('should extract token from query parameter', async () => {
+      const mockUser = {
+        id: 'user-123',
+        username: 'testuser',
+        email: 'test@example.com',
+      };
+
+      mockClient.handshake.query.token = 'query-token';
+      
+      jest.spyOn(jwtService, 'verifyAsync').mockResolvedValue({ sub: 'user-123', username: 'testuser' });
+      jest.spyOn(configService, 'get').mockReturnValue('test-secret');
+      jest.spyOn(authService, 'validateUser').mockResolvedValue(mockUser as any);
+      jest.spyOn(gameService, 'addClient');
+      jest.spyOn(gameService, 'getConnectedClientsCount').mockReturnValue(1);
+
+      await gateway.handleConnection(mockClient);
+
+      expect(jwtService.verifyAsync).toHaveBeenCalledWith('query-token', { secret: 'test-secret' });
+      expect(mockClient.emit).toHaveBeenCalledWith(GAME_CONSTANTS.EVENTS.CONNECTED, expect.objectContaining({
+        message: GAME_CONSTANTS.MESSAGES.CONNECTION_SUCCESS,
+        user: mockUser,
+      }));
     });
   });
 
