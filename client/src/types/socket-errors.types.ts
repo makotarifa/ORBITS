@@ -94,6 +94,7 @@ export interface SocketErrorMetrics {
   consecutiveErrors: number;
   errorRate: number;        // Errors per minute
   errorTypes: Map<SocketErrorType, number>;
+  errorTimestamps: number[]; // Timestamps of recent errors for rate calculation
 }
 
 // Error classification utilities

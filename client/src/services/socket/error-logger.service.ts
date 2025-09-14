@@ -128,7 +128,11 @@ class ErrorLoggerService {
       // Try to get user ID from token service or auth context
       const token = sessionStorage.getItem('accessToken');
       if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+          return undefined;
+        }
+        const payload = JSON.parse(atob(parts[1]));
         return payload.sub || payload.userId;
       }
     } catch (error) {

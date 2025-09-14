@@ -70,7 +70,8 @@ export class SocketService {
       lastErrorTime: 0,
       consecutiveErrors: 0,
       errorRate: 0,
-      errorTypes: new Map()
+      errorTypes: new Map(),
+      errorTimestamps: []
     };
     this.initializeSocket();
   }
@@ -125,12 +126,18 @@ export class SocketService {
     const currentCount = this.errorMetrics.errorTypes.get(errorDetails.type) || 0;
     this.errorMetrics.errorTypes.set(errorDetails.type, currentCount + 1);
     
-    // Calculate error rate (errors per minute)
+    // Track error timestamps for rate calculation
+    this.errorMetrics.errorTimestamps.push(errorDetails.timestamp);
+    
+    // Remove timestamps older than 1 minute
     const timeWindow = 60000; // 1 minute
     const cutoffTime = Date.now() - timeWindow;
-    if (this.errorMetrics.lastErrorTime > cutoffTime) {
-      this.errorMetrics.errorRate = this.errorMetrics.errorCount / (timeWindow / 60000);
-    }
+    this.errorMetrics.errorTimestamps = this.errorMetrics.errorTimestamps.filter(
+      timestamp => timestamp > cutoffTime
+    );
+    
+    // Calculate error rate (errors per minute)
+    this.errorMetrics.errorRate = this.errorMetrics.errorTimestamps.length;
   }
 
   private logError(errorDetails: SocketErrorDetails): void {
@@ -300,7 +307,15 @@ export class SocketService {
 
       // Check if token will expire in the next 5 minutes
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+          throw new Error('Invalid JWT token structure');
+        }
+        const payloadJson = atob(parts[1]);
+        const payload = JSON.parse(payloadJson);
+        if (!payload || typeof payload.exp !== 'number') {
+          throw new Error('JWT payload missing exp field');
+        }
         const expiryTime = payload.exp * 1000; // Convert to milliseconds
         const timeUntilExpiry = expiryTime - Date.now();
         const fiveMinutes = 5 * 60 * 1000;
@@ -345,10 +360,7 @@ export class SocketService {
         socketOptions.auth = {
           token: token
         };
-        // Also add as query parameter for compatibility
-        socketOptions.query = {
-          token: token
-        };
+        // Removed insecure query parameter transmission of JWT token
       }
 
       this.socket = io(`${serverUrl}${GAME_CONSTANTS.NAMESPACE}`, socketOptions);
