@@ -14,7 +14,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   showDetails = false,
   showRecoveryActions = false
 }) => {
-  const { isConnected, connectionError } = useConnectionState();
+  const { isConnected, isReconnecting, connectionError } = useConnectionState();
   const { 
     isConnecting, 
     errorDetails, 
@@ -44,6 +44,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           return 'text-red-500';
       }
     }
+    if (isReconnecting) return 'text-orange-500';
     if (isConnected) return 'text-green-500';
     if (isConnecting) return 'text-blue-500';
     return 'text-yellow-500';
@@ -64,6 +65,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           return 'bg-red-500';
       }
     }
+    if (isReconnecting) return 'bg-orange-500 animate-pulse';
     if (isConnected) return 'bg-green-500';
     if (isConnecting) return 'bg-blue-500 animate-pulse';
     return 'bg-yellow-500 animate-pulse';
@@ -71,6 +73,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
 
   const getStatusText = (): string => {
     if (errorDetails) return errorDetails.userMessage;
+    if (isReconnecting) return 'Reconnecting...';
     if (isConnected) return 'Connected';
     if (isConnecting) return 'Connecting...';
     return 'Disconnected';
