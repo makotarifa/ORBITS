@@ -81,7 +81,7 @@ describe('SocketService', () => {
         }
       });
 
-      await expect(socketService.connect()).rejects.toThrow('Connection failed');
+      await expect(socketService.connect()).rejects.toThrow('An unexpected connection error occurred. Please try again.');
     });
 
     it('should disconnect properly', () => {

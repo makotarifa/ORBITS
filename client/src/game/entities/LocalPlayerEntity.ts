@@ -66,8 +66,8 @@ export class LocalPlayerEntity extends BasePlayerEntity {
     }
 
     // Apply acceleration to velocity
-    this.velocity.x += inputVector.x * GAME_CONSTANTS.DEFAULTS.PLAYER.ACCELERATION * deltaTime;
-    this.velocity.y += inputVector.y * GAME_CONSTANTS.DEFAULTS.PLAYER.ACCELERATION * deltaTime;
+    this.velocity.x += inputVector.x * GAME_CONSTANTS.PLAYER.ACCELERATION * deltaTime;
+    this.velocity.y += inputVector.y * GAME_CONSTANTS.PLAYER.ACCELERATION * deltaTime;
 
     // Limit maximum velocity
     const maxSpeed = GAME_CONSTANTS.PLAYER.MOVE_SPEED;

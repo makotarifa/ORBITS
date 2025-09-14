@@ -27,6 +27,12 @@ export const GAME_CONSTANTS = {
     FAILED_TO_INITIALIZE_SOCKET: 'Failed to initialize socket:',
     ATTEMPTS: 'attempts',
     RECONNECT_FAILED: 'Failed to reconnect to game server',
+    // JWT Authentication messages
+    TOKEN_EXPIRED: 'Authentication token has expired',
+    TOKEN_INVALID: 'Authentication token is invalid',
+    TOKEN_REFRESH_FAILED: 'Failed to refresh authentication token',
+    TOKEN_NOT_FOUND: 'Authentication token not found',
+    AUTHENTICATION_REQUIRED: 'Authentication required to connect',
   },
   UI: {
     LABELS: {
@@ -102,6 +108,7 @@ export const GAME_CONSTANTS = {
     RECONNECTION: true,
     MAX_RECONNECT_ATTEMPTS: 5,
     RECONNECT_DELAY: 1000,
+    HEALTH_CHECK_INTERVAL: 60000, // 1 minute health check interval
   },
   LATENCY: {
     PING_INTERVAL: 5000, // 5 seconds between pings
