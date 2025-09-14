@@ -343,7 +343,7 @@ export class SocketService {
         socketOptions.auth = {
           token: token
         };
-        // Removed insecure query parameter transmission of JWT token
+        // JWT token is now securely transmitted using the 'auth' property instead of query parameters
       }
 
       this.socket = io(`${serverUrl}${GAME_CONSTANTS.NAMESPACE}`, socketOptions);

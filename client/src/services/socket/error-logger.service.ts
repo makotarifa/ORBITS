@@ -1,5 +1,6 @@
 import { SocketErrorDetails, SocketErrorMetrics } from '../../types/socket-errors.types';
 import { JwtUtils } from '../../utils';
+import { tokenService } from '../token/token.service';
 
 export interface LogEntry {
   id: string;
@@ -34,9 +35,9 @@ export interface ErrorReportData {
 
 class ErrorLoggerService {
   private logs: LogEntry[] = [];
-  private maxLogEntries = 1000;
+  private readonly maxLogEntries = 1000;
   private debugMode: boolean;
-  private sessionId: string;
+  private readonly sessionId: string;
 
   constructor() {
     this.debugMode = import.meta.env.DEV || localStorage.getItem('socket-debug') === 'true';
@@ -50,7 +51,19 @@ class ErrorLoggerService {
   }
 
   private generateSessionId(): string {
-    return `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Use cryptographically secure random generation
+    const array = new Uint8Array(9);
+    crypto.getRandomValues(array);
+    const randomString = Array.from(array, byte => byte.toString(36)).join('').substring(0, 9);
+    return `sess_${Date.now()}_${randomString}`;
+  }
+
+  private generateLogId(): string {
+    // Use cryptographically secure random generation for log IDs
+    const array = new Uint8Array(6);
+    crypto.getRandomValues(array);
+    const randomString = Array.from(array, byte => byte.toString(36)).join('').substring(0, 6);
+    return `log_${Date.now()}_${randomString}`;
   }
 
   public log(
@@ -61,7 +74,7 @@ class ErrorLoggerService {
     error?: Error
   ): void {
     const logEntry: LogEntry = {
-      id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      id: this.generateLogId(),
       timestamp: Date.now(),
       level,
       category,
@@ -125,8 +138,8 @@ class ErrorLoggerService {
   }
 
   private getCurrentUserId(): string | undefined {
-    // Try to get user ID from token service or auth context
-    const token = sessionStorage.getItem('accessToken');
+    // Try to get user ID from token service
+    const token = tokenService.getToken();
     if (token) {
       return JwtUtils.getJwtUserId(token);
     }

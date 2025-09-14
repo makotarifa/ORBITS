@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { socketService } from '../../services/socket/socket.service';
 import { SocketErrorDetails } from '../../types/socket-errors.types';
+import { GAME_CONSTANTS } from '../../constants/game.constants';
 
 export interface UseSocketReturn {
   isConnected: boolean;
@@ -154,7 +155,7 @@ export const useSocket = (): UseSocketReturn => {
       const currentError = socketService.getCurrentError();
       setErrorDetails(currentError);
       
-      if (currentError && currentError.canRetry) {
+      if (currentError?.canRetry) {
         updateRetryCountdown(currentError);
       }
       
@@ -243,7 +244,7 @@ export const useSocket = (): UseSocketReturn => {
 
   // Health check interval
   useEffect(() => {
-    const healthCheckInterval = setInterval(updateConnectionHealth, 30000); // Every 30 seconds
+    const healthCheckInterval = setInterval(updateConnectionHealth, GAME_CONSTANTS.SOCKET.HEALTH_CHECK_INTERVAL); // Configurable health check interval
     return () => clearInterval(healthCheckInterval);
   }, [updateConnectionHealth]);
 

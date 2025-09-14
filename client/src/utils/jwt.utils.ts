@@ -23,7 +23,8 @@ export class JwtUtils {
         throw new Error('Invalid JWT token structure');
       }
 
-      const payloadJson = atob(parts[1]);
+      // JWT uses base64url encoding, not standard base64
+      const payloadJson = this.base64UrlDecode(parts[1]);
       const payload: JwtPayload = JSON.parse(payloadJson);
 
       if (!payload || typeof payload !== 'object') {
@@ -35,6 +36,20 @@ export class JwtUtils {
       console.warn('Failed to parse JWT token:', error);
       return null;
     }
+  }
+
+  /**
+   * Decode base64url string to regular string
+   * @param base64Url base64url encoded string
+   * @returns Decoded string
+   */
+  private static base64UrlDecode(base64Url: string): string {
+    // Convert base64url to base64 by replacing chars and adding padding
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4 !== 0) {
+      base64 += '=';
+    }
+    return atob(base64);
   }
 
   /**

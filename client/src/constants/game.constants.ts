@@ -105,6 +105,7 @@ export const GAME_CONSTANTS = {
     RECONNECTION: true,
     MAX_RECONNECT_ATTEMPTS: 5,
     RECONNECT_DELAY: 1000,
+    HEALTH_CHECK_INTERVAL: 60000, // 1 minute health check interval
   },
   PLAYER: {
     MOVE_SPEED: 200,
