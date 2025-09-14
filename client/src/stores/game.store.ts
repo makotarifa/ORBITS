@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { PlayerState } from '../types/game-events.types';
+import { GAME_CONSTANTS } from '../constants/game.constants';
 
 export interface GameState {
   // Connection state
@@ -8,6 +9,12 @@ export interface GameState {
   isReconnecting: boolean;
   connectionError: string | null;
   socketId: string | null;
+
+  // Latency state
+  latency: number | null;
+  latencyHistory: number[];
+  averageLatency: number | null;
+  isLatencyMeasuring: boolean;
 
   // Room state
   currentRoom: string | null;
@@ -36,6 +43,12 @@ export interface GameActions {
   setReconnecting: (reconnecting: boolean) => void;
   setConnectionError: (error: string | null) => void;
   setSocketId: (socketId: string | null) => void;
+
+  // Latency actions
+  setLatency: (latency: number | null) => void;
+  addLatencyMeasurement: (latency: number) => void;
+  setLatencyMeasuring: (measuring: boolean) => void;
+  clearLatencyHistory: () => void;
 
   // Room actions
   setCurrentRoom: (roomId: string | null) => void;
@@ -69,6 +82,10 @@ const initialState: GameState = {
   isReconnecting: false,
   connectionError: null,
   socketId: null,
+  latency: null,
+  latencyHistory: [],
+  averageLatency: null,
+  isLatencyMeasuring: false,
   currentRoom: null,
   availableRooms: [],
   roomPlayers: new Map(),
@@ -89,6 +106,37 @@ export const useGameStore = create<GameStore>()(
     setReconnecting: (reconnecting: boolean) => set({ isReconnecting: reconnecting }),
     setConnectionError: (error: string | null) => set({ connectionError: error }),
     setSocketId: (socketId: string | null) => set({ socketId }),
+
+    // Latency actions
+    setLatency: (latency: number | null) => set({ latency }),
+    setLatencyMeasuring: (measuring: boolean) => set({ isLatencyMeasuring: measuring }),
+    
+    addLatencyMeasurement: (latency: number) => {
+      set((state) => {
+        const newHistory = [...state.latencyHistory, latency];
+        // Keep only the last MAX_HISTORY measurements
+        const maxHistory = GAME_CONSTANTS.LATENCY.MAX_HISTORY;
+        if (newHistory.length > maxHistory) {
+          newHistory.shift();
+        }
+        
+        // Calculate average
+        const averageLatency = newHistory.reduce((sum, val) => sum + val, 0) / newHistory.length;
+        
+        return {
+          latency,
+          latencyHistory: newHistory,
+          averageLatency,
+        };
+      });
+    },
+    
+    clearLatencyHistory: () => set({ 
+      latency: null, 
+      latencyHistory: [], 
+      averageLatency: null,
+      isLatencyMeasuring: false 
+    }),
 
     // Room actions
     setCurrentRoom: (roomId: string | null) => set({ currentRoom: roomId }),
@@ -162,6 +210,13 @@ export const useConnectionState = () => useGameStore((state) => ({
   isReconnecting: state.isReconnecting,
   connectionError: state.connectionError,
   socketId: state.socketId,
+}));
+
+export const useLatencyState = () => useGameStore((state) => ({
+  latency: state.latency,
+  latencyHistory: state.latencyHistory,
+  averageLatency: state.averageLatency,
+  isLatencyMeasuring: state.isLatencyMeasuring,
 }));
 
 export const useRoomState = () => useGameStore((state) => ({

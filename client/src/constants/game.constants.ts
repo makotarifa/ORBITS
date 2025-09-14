@@ -41,6 +41,9 @@ export const GAME_CONSTANTS = {
       INSTRUCTIONS: 'Instructions',
       CONTROLS: 'Controls',
       CONNECTED_TO: 'Connected to:',
+      LATENCY: 'Ping:',
+      LATENCY_MS: 'ms',
+      LATENCY_UNKNOWN: '---',
     },
     PLACEHOLDERS: {
       ENTER_ROOM_ID: 'Enter room ID',
@@ -106,6 +109,13 @@ export const GAME_CONSTANTS = {
     MAX_RECONNECT_ATTEMPTS: 5,
     RECONNECT_DELAY: 1000,
     HEALTH_CHECK_INTERVAL: 60000, // 1 minute health check interval
+  },
+  LATENCY: {
+    PING_INTERVAL: 5000, // 5 seconds between pings
+    TIMEOUT: 3000, // 3 second timeout for pong response
+    GOOD_THRESHOLD: 50, // <50ms is good
+    OKAY_THRESHOLD: 150, // 50-150ms is okay, >150ms is poor
+    MAX_HISTORY: 10, // Keep last 10 measurements for averaging
   },
   PLAYER: {
     MOVE_SPEED: 200,
