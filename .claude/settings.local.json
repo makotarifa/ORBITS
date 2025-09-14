@@ -41,7 +41,11 @@
       "Bash(npm install)",
       "Bash(git init:*)",
       "Bash(gh api:*)",
-      "mcp__atlassian__getJiraProjectIssueTypesMetadata"
+      "mcp__atlassian__getJiraProjectIssueTypesMetadata",
+      "Bash(timeout 10 npm run test)",
+      "Bash(timeout 10 npm run test -- GameUI.test.tsx)",
+      "Bash(timeout 10 npm run test -- useLatency.test.ts)",
+      "Bash(timeout 10 npm run test -- LatencyIndicator.test.tsx)"
     ],
     "deny": [],
     "ask": [],

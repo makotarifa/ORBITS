@@ -26,6 +26,10 @@ vi.mock('./GameControls', () => ({
   ),
 }));
 
+vi.mock('./LatencyIndicator', () => ({
+  LatencyIndicator: () => <div data-testid="latency-indicator">Latency Indicator</div>,
+}));
+
 describe('GameUI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -35,6 +39,7 @@ describe('GameUI', () => {
     render(<GameUI />);
 
     expect(screen.getByTestId('connection-status')).toBeInTheDocument();
+    expect(screen.getByTestId('latency-indicator')).toBeInTheDocument();
     expect(screen.getByTestId('game-controls')).toBeInTheDocument();
     expect(screen.getByTestId('room-info')).toBeInTheDocument();
     expect(screen.getByTestId('player-list')).toBeInTheDocument();
@@ -54,8 +59,12 @@ describe('GameUI', () => {
     render(<GameUI />);
 
     // Main container should have absolute positioning
-    const mainContainer = screen.getByTestId('connection-status').parentElement;
+    const mainContainer = screen.getByTestId('connection-status').parentElement?.parentElement;
     expect(mainContainer).toHaveClass('absolute', 'top-4', 'left-4', 'z-10', 'space-y-4');
+
+    // Connection/Latency container should be flex
+    const connectionContainer = screen.getByTestId('connection-status').parentElement;
+    expect(connectionContainer).toHaveClass('flex', 'items-center', 'space-x-4');
 
     // Room info should be positioned top-right
     const roomInfoContainer = screen.getByTestId('room-info').parentElement;
@@ -94,7 +103,7 @@ describe('GameUI', () => {
   it('applies custom className', () => {
     render(<GameUI className="custom-class" />);
 
-    const mainContainer = screen.getByTestId('connection-status').parentElement;
+    const mainContainer = screen.getByTestId('connection-status').parentElement?.parentElement;
     expect(mainContainer).toHaveClass('custom-class');
   });
 

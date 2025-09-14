@@ -1,5 +1,6 @@
 import React from 'react';
 import { ConnectionStatus } from './ConnectionStatus';
+import { LatencyIndicator } from './LatencyIndicator';
 import { PlayerList } from './PlayerList';
 import { RoomInfo } from './RoomInfo';
 import { GameControls } from './GameControls';
@@ -12,8 +13,11 @@ interface GameUIProps {
 export const GameUI: React.FC<GameUIProps> = ({ className = '' }) => {
   return (
     <div className={`absolute top-4 left-4 z-10 space-y-4 ${className}`}>
-      {/* Connection Status - Top Left */}
-      <ConnectionStatus />
+      {/* Connection Status & Latency - Top Left */}
+      <div className="flex items-center space-x-4">
+        <ConnectionStatus />
+        <LatencyIndicator />
+      </div>
 
       {/* Game Controls - Top Left, below connection status */}
       <GameControls className="w-80" />
