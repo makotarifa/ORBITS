@@ -14,7 +14,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "zod": "^4.1.13"
+    "zod": "^4.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
