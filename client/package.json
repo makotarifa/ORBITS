@@ -49,7 +49,7 @@
     "autoprefixer": "^10.4.22",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.25",
+    "eslint-plugin-react-refresh": "^0.4.26",
     "jsdom": "^27.3.0",
     "postcss": "^8.4.31",
     "tailwindcss": "^4.1.17",
