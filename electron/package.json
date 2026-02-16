@@ -87,7 +87,7 @@
     "electron": "^40.4.1",
     "electron-builder": "^26.7.0",
     "@types/node": "^25.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.53.1",
     "concurrently": "^9.2.1",
     "eslint": "^10.0.0",
