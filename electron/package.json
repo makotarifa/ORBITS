@@ -84,7 +84,7 @@
     "electron-updater": "^6.8.3"
   },
   "devDependencies": {
-    "electron": "^40.8.0",
+    "electron": "^41.0.2",
     "electron-builder": "^26.7.0",
     "@types/node": "^25.3.5",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
